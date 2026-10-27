@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Transactions - Home Budget{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Transactions</h1>
+  <div>
+    <a class="btn" href="{{ url_for('export_transactions') }}">Export CSV</a>
+    <a class="btn" href="{{ url_for('add_transaction') }}">+ Add transaction</a>
+  </div>
+</div>
+
+<form method="get" class="inline filters">
+  <label>Type
+    <select name="type">
+      <option value="">All</option>
+      <option value="income" {{ 'selected' if f_type == 'income' }}>Income</option>
+      <option value="expense" {{ 'selected' if f_type == 'expense' }}>Expense</option>
+    </select>
+  </label>
+  <label>Category
+    <select name="category">
+      <option value="">All</option>
+      {% for c in categories %}<option value="{{ c.category_id }}" {{ 'selected' if f_cat == c.category_id }}>{{ c.category_name }} ({{ c.category_type }})</option>{% endfor %}
+    </select>
+  </label>
+  <label>Month <input type="month" name="month" value="{{ f_month }}"></label>
+  <button type="submit">Filter</button>
+  <a href="{{ url_for('transactions') }}">Clear</a>
+</form>
+
+{% if rows %}
+<table>
+  <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th class="num">Amount</th><th></th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.transaction_date }}</td>
+      <td><span class="tag {{ r.transaction_type }}">{{ r.transaction_type }}</span></td>
+      <td>{{ r.category_name }}</td>
+      <td>{{ r.description or '' }}</td>
+      <td class="num {{ 'pos' if r.transaction_type == 'income' else 'neg' }}">{{ r.amount|money }}</td>
+      <td class="actions">
+        <a href="{{ url_for('edit_transaction', txn_id=r.transaction_id) }}">Edit</a>
+        <form method="post" action="{{ url_for('delete_transaction', txn_id=r.transaction_id) }}"
+              onsubmit="return confirm('Delete this transaction?');">
+          <button class="link danger" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="muted">Showing up to 500 most recent matching records.</p>
+{% else %}
+<p class="muted">No transactions found.</p>
+{% endif %}
+{% endblock %}

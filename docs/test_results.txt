@@ -1,0 +1,100 @@
+Home Budget Tracker - unit test run
+Command: python -m unittest discover -v
+Run on: 2026-10-26 19:23 UTC, Python 3.13.17
+
+test_boundaries_exactly_100_percent_is_not_over_and_80_percent_is_warning (tests.test_analysis.AnalysisTests.test_boundaries_exactly_100_percent_is_not_over_and_80_percent_is_warning) ... ok
+test_category_expense_sorted_with_shares ... ok
+test_category_month_pivot ... ok
+test_charts_render_png_for_data_and_for_empty_data ... ok
+test_empty_dataset_everywhere ... ok
+test_month_without_income_has_negative_savings_and_zero_rate ... ok
+test_monthly_summary_has_twelve_rows_and_correct_savings ... ok
+test_no_budgets_gives_empty_table ... ok
+test_october_budget_statuses ... ok
+test_october_totals ... ok
+test_savings_report ... ok
+test_year_total_adds_up_all_months ... ok
+test_insights_for_month_without_income ... ok
+test_insights_for_october ... ok
+test_insights_levels ... ok
+test_no_history_means_no_suggestions ... ok
+test_suggestions_across_a_year_boundary ... ok
+test_suggestions_average_three_months ... ok
+test_suggestions_use_previous_months_only ... ok
+test_formula_injection_is_neutralised ... ok
+test_missing_description_exports_as_empty ... ok
+test_summary_export ... ok
+test_transactions_export ... ok
+test_blank_lines_are_skipped_and_description_is_optional ... ok
+test_boundary_amounts ... ok
+test_empty_file ... ok
+test_exactly_the_maximum_number_of_rows_is_accepted ... ok
+test_header_only_file_imports_nothing ... ok
+test_headers_are_case_and_space_insensitive ... ok
+test_missing_required_column ... ok
+test_sample_file_has_six_valid_and_six_rejected_rows ... ok
+test_short_row_is_rejected_not_crashing ... ok
+test_too_many_rows ... ok
+test_valid_rows_are_ready_to_insert ... ok
+test_add_category ... ok
+test_add_category_validation ... ok
+test_budget_suggestions_are_listed_and_can_prefill_the_form ... ok
+test_cannot_delete_category_with_transactions ... ok
+test_duplicate_category_shows_message ... ok
+test_no_suggestions_without_history ... ok
+test_save_budgets ... ok
+test_health_check_reports_database_down ... ok
+ok
+ok
+test_all_pages_and_charts_work_with_no_data ... ok
+test_empty_exports_contain_only_headers ... ok
+test_export_all_transactions ... ok
+test_export_filtered_by_month ... ok
+test_export_monthly_summary ... ok
+ok
+test_import_rejects_non_utf8_file (tests.test_routes.ExportImportRouteTests.test_import_rejects_non_utf8_file) ... ok
+test_import_rejects_oversized_file ... ok
+test_import_rejects_wrong_columns ... ok
+test_import_sample_file_saves_valid_rows_and_lists_rejected_rows ... ok
+test_import_with_only_invalid_rows_writes_nothing ... ok
+test_import_without_a_file ... ok
+test_api_budget_status ... ok
+test_api_insights ... ok
+test_api_summary ... ok
+test_api_transactions ... ok
+test_health_ok ... ok
+test_charts_return_png ... ok
+test_dashboard_lists_violations_and_insights ... ok
+test_every_page_loads_with_sample_data ... ok
+test_out_of_range_period_values_are_clamped ... ok
+test_reports_show_deficit_month_and_captions ... ok
+test_unknown_chart_and_whole_year_budget_chart ... ok
+test_unknown_page_shows_friendly_404 (tests.test_routes.PageTests.test_unknown_page_shows_friendly_404) ... ok
+test_add_rejects_invalid_input_and_writes_nothing ... ok
+test_add_valid_transaction ... ok
+test_boundary_amounts_are_accepted ... ok
+test_delete_needs_post ... ok
+test_delete_transaction ... ok
+test_edit_invalid_does_not_update ... ok
+test_edit_missing_record_is_404 (tests.test_routes.TransactionCrudTests.test_edit_missing_record_is_404) ... ok
+test_edit_transaction ... ok
+test_form_is_shown_again_with_the_users_input ... ok
+test_invalid_month_filter_is_ignored_with_a_message ... ok
+test_invalid_amounts_are_rejected ... ok
+test_valid_amounts_including_boundaries ... ok
+test_invalid_dates ... ok
+test_valid_date ... ok
+test_bad_type ... ok
+test_category_must_match_type ... ok
+test_description_is_cut_to_255_characters (tests.test_validation.TransactionTests.test_description_is_cut_to_255_characters) ... ok
+test_missing_category ... ok
+test_missing_description_is_allowed ... ok
+test_several_errors_reported_together ... ok
+test_valid_expense ... ok
+test_valid_income ... ok
+test_year_range_boundaries ... ok
+
+----------------------------------------------------------------------
+Ran 91 tests in 1.926s
+
+OK

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Categories - Home Budget{% endblock %}
+{% block content %}
+<h1>Categories</h1>
+
+<form method="post" class="inline">
+  <label>Name <input type="text" name="category_name" maxlength="50" required></label>
+  <label>Type
+    <select name="category_type">
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+    </select>
+  </label>
+  <button type="submit">Add category</button>
+</form>
+
+<table>
+  <thead><tr><th>Name</th><th>Type</th><th class="num">Transactions</th><th></th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.category_name }}</td>
+      <td><span class="tag {{ r.category_type }}">{{ r.category_type }}</span></td>
+      <td class="num">{{ r.txn_count }}</td>
+      <td class="actions">
+        {% if r.txn_count == 0 %}
+        <form method="post" action="{{ url_for('delete_category', cat_id=r.category_id) }}"
+              onsubmit="return confirm('Delete this category?');">
+          <button class="link danger" type="submit">Delete</button>
+        </form>
+        {% else %}<span class="muted">in use</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

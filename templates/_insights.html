@@ -1,0 +1,14 @@
+{# Feature 1: Smart insights. Expects a list called `insights`. #}
+{% if insights %}
+<section class="insights">
+  <h2>Smart insights</h2>
+  <ul>
+    {% for i in insights %}
+    <li>
+      <span class="tag {{ 'st-over' if i.level == 'warning' else 'st-ok' if i.level == 'good' else '' }}">{{ 'Watch' if i.level == 'warning' else 'Good' if i.level == 'good' else 'Note' }}</span>
+      <span>{{ i.text }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}

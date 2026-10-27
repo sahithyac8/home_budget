@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Import / Export - Home Budget{% endblock %}
+{% block content %}
+<h1>Import / Export</h1>
+
+<section>
+  <h2>Export</h2>
+  <p class="muted">Download your records as CSV files that open in Excel.</p>
+  <p>
+    <a class="btn" href="{{ url_for('export_transactions') }}">All transactions (CSV)</a>
+    <a class="btn" href="{{ url_for('export_monthly_summary') }}">Monthly summary for this year (CSV)</a>
+  </p>
+</section>
+
+<section>
+  <h2>Import transactions from CSV</h2>
+  <p class="muted">The first row must be the header: <code>{{ columns|join(', ') }}</code>
+    (description is optional). Dates use YYYY-MM-DD, type is income or expense, and the category name
+    must already exist for that type. Every row is checked with the same rules as the Add form:
+    valid rows are saved, invalid rows are listed below with the reason. Maximum 1000 rows and 1 MB.</p>
+  <form method="post" enctype="multipart/form-data" class="inline">
+    <label>CSV file <input type="file" name="file" accept=".csv,text/csv" required></label>
+    <button type="submit">Import</button>
+  </form>
+</section>
+
+{% if result %}
+<section>
+  <h2>Import result</h2>
+  <div class="cards">
+    <div class="card"><span>Rows saved</span><strong class="pos">{{ result.imported }}</strong></div>
+    <div class="card"><span>Rows rejected</span><strong class="{{ 'neg' if result.rejected }}">{{ result.rejected|length }}</strong></div>
+  </div>
+  {% if result.rejected %}
+  <table>
+    <thead><tr><th>CSV line</th><th>Date</th><th>Type</th><th>Category</th><th>Amount</th><th>Why it was rejected</th></tr></thead>
+    <tbody>
+      {% for r in result.rejected %}
+      <tr>
+        <td>{{ r.row }}</td><td>{{ r['values'].transaction_date }}</td><td>{{ r['values'].transaction_type }}</td>
+        <td>{{ r['values'].category }}</td><td>{{ r['values'].amount }}</td>
+        <td>{{ r.errors|join(' ') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

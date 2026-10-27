@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if txn.transaction_id else 'Add' }} transaction - Home Budget{% endblock %}
+{% block content %}
+<h1>{{ 'Edit' if txn.transaction_id else 'Add' }} transaction</h1>
+
+{% if errors %}
+<div class="flash error"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<form method="post" class="stack">
+  <label>Date
+    <input type="date" name="transaction_date" required value="{{ txn.transaction_date or '' }}">
+  </label>
+  <label>Type
+    <select name="transaction_type" id="ttype" required>
+      <option value="expense" {{ 'selected' if txn.transaction_type == 'expense' }}>Expense</option>
+      <option value="income" {{ 'selected' if txn.transaction_type == 'income' }}>Income</option>
+    </select>
+  </label>
+  <label>Category
+    <select name="category_id" id="cat" required>
+      {% for c in categories %}
+        <option value="{{ c.category_id }}" data-type="{{ c.category_type }}"
+                {{ 'selected' if txn.category_id == c.category_id }}>{{ c.category_name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Amount
+    <input type="number" name="amount" step="0.01" min="0.01" required value="{{ txn.amount or '' }}">
+  </label>
+  <label>Description
+    <input type="text" name="description" maxlength="255" value="{{ txn.description or '' }}">
+  </label>
+  <div>
+    <button type="submit">Save</button>
+    <a href="{{ url_for('transactions') }}">Cancel</a>
+  </div>
+</form>
+
+<script>
+  // Show only categories that match the chosen transaction type.
+  const typeSel = document.getElementById('ttype');
+  const catSel = document.getElementById('cat');
+  function filterCategories() {
+    let firstVisible = null;
+    for (const opt of catSel.options) {
+      const show = opt.dataset.type === typeSel.value;
+      opt.hidden = !show;
+      opt.disabled = !show;
+      if (show && !firstVisible) firstVisible = opt;
+    }
+    if (catSel.selectedOptions[0] && catSel.selectedOptions[0].disabled && firstVisible) {
+      catSel.value = firstVisible.value;
+    }
+  }
+  typeSel.addEventListener('change', filterCategories);
+  filterCategories();
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{# Month/year picker. Set allow_year=true to offer a "Full year" option. #}
+<form method="get" class="inline">
+  <label>Month
+    <select name="month">
+      {% if allow_year %}<option value="0" {{ 'selected' if month == 0 }}>Full year</option>{% endif %}
+      {% for n in month_names %}
+        <option value="{{ loop.index }}" {{ 'selected' if month == loop.index }}>{{ n }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Year <input type="number" name="year" value="{{ year }}" min="2000" max="2100"></label>
+  <button type="submit">Apply</button>
+</form>

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chart %}
+{% block title %}Budgets - Home Budget{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Monthly budgets - {{ month_names[month - 1] }} {{ year }}</h1>
+  {% with allow_year=false %}{% include "_period.html" %}{% endwith %}
+</div>
+
+{% if suggestions %}
+<section>
+  <h2>Suggested limits</h2>
+  <p class="muted">Average monthly spending per category over the previous months that have expenses
+    (based on {{ suggestions[0].months_used }} month{{ 's' if suggestions[0].months_used != 1 }}),
+    rounded up to the next 100.
+    <a href="{{ url_for('budgets', year=year, month=month, suggest=1) }}">Pre-fill the form with these suggestions</a></p>
+  <table>
+    <thead><tr><th>Category</th><th class="num">Average spend</th><th class="num">Suggested limit</th><th class="num">Current limit</th></tr></thead>
+    <tbody>
+      {% for s in suggestions %}
+      <tr><td>{{ s.category_name }}</td><td class="num">{{ s.average_spend|money }}</td>
+          <td class="num"><b>{{ s.suggested|money }}</b></td>
+          <td class="num">{{ current[s.category_id]|money if s.category_id in current else 'Not set' }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if prefilled %}
+<div class="flash success">The form below is pre-filled with the suggestions. Nothing is saved until you press Save budgets.</div>
+{% endif %}
+
+<form method="post" class="stack narrow">
+  <input type="hidden" name="year" value="{{ year }}">
+  <input type="hidden" name="month" value="{{ month }}">
+  <p class="muted">Enter a spending limit for each expense category. Leave blank (or 0) for no limit.</p>
+  {% for c in cats %}
+  <label>{{ c.category_name }}
+    <input type="number" step="0.01" min="0" name="budget_{{ c.category_id }}"
+           value="{{ form_values.get(c.category_id, '') }}">
+  </label>
+  {% endfor %}
+  <div><button type="submit">Save budgets</button></div>
+</form>
+
+<h2>Utilization</h2>
+{% if status %}
+<table>
+  <thead><tr><th>Category</th><th class="num">Budget</th><th class="num">Spent</th><th class="num">Remaining</th><th class="num">Used</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for s in status %}
+    <tr>
+      <td>{{ s.category_name }}</td>
+      <td class="num">{{ s.budget_amount|money }}</td>
+      <td class="num">{{ s.spent|money }}</td>
+      <td class="num {{ 'neg' if s.remaining < 0 }}">{{ s.remaining|money }}</td>
+      <td class="num">{{ s.utilization }}%</td>
+      <td><span class="tag st-{{ s.status|lower }}">{{ s.status }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{{ chart('budget', year, month, 'Budget utilization by category') }}
+{% else %}
+<p class="muted">No budgets set for this month yet.</p>
+{% endif %}
+{% endblock %}

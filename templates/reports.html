@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chart %}
+{% block title %}Reports - Home Budget{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Reports - {{ year }}</h1>
+  {% with allow_year=true %}{% include "_period.html" %}{% endwith %}
+</div>
+<p><a class="btn" href="{{ url_for('export_monthly_summary', year=year) }}">Download monthly summary (CSV)</a></p>
+
+<section class="cards">
+  <div class="card"><span>Income ({{ year }})</span><strong class="pos">{{ totals.income|money }}</strong></div>
+  <div class="card"><span>Expenses ({{ year }})</span><strong class="neg">{{ totals.expense|money }}</strong></div>
+  <div class="card"><span>Savings ({{ year }})</span><strong class="{{ 'pos' if totals.savings >= 0 else 'neg' }}">{{ totals.savings|money }}</strong></div>
+  <div class="card"><span>Savings rate</span><strong>{{ totals.savings_rate }}%</strong></div>
+</section>
+
+{% include "_insights.html" %}
+
+<section>
+  <h2>Month-wise summary</h2>
+  <table>
+    <thead><tr><th>Month</th><th class="num">Income</th><th class="num">Expenses</th><th class="num">Savings</th><th class="num">Savings rate</th></tr></thead>
+    <tbody>
+      {% for m in summary %}
+      <tr>
+        <td>{{ m.month_name }}</td>
+        <td class="num">{{ m.income|money }}</td>
+        <td class="num">{{ m.expense|money }}</td>
+        <td class="num {{ 'neg' if m.savings < 0 else 'pos' if m.savings > 0 }}">{{ m.savings|money }}</td>
+        <td class="num">{{ m.savings_rate }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {{ chart('monthly', year, month, 'Income versus expenses by month') }}
+</section>
+
+<section>
+  <h2>Savings report</h2>
+  {% if savings %}
+  <table class="kv">
+    <tr><th>Total savings</th><td>{{ savings.total_savings|money }}</td></tr>
+    <tr><th>Average monthly savings</th><td>{{ savings.average_monthly_savings|money }}</td></tr>
+    <tr><th>Best month</th><td>{{ savings.best_month }}</td></tr>
+    <tr><th>Lowest month</th><td>{{ savings.worst_month }}</td></tr>
+    <tr><th>Months with a deficit</th><td>{{ savings.deficit_months }} of {{ savings.active_months }}</td></tr>
+  </table>
+  {% else %}<p class="muted">No transactions recorded for {{ year }}.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Category-wise expenses - {{ month_names[month - 1] ~ ' ' if month }}{{ year }}</h2>
+  {% if cats %}
+  <div class="grid2">
+    <table>
+      <thead><tr><th>Category</th><th class="num">Spent</th><th class="num">Share</th></tr></thead>
+      <tbody>
+        {% for c in cats %}<tr><td>{{ c.category_name }}</td><td class="num">{{ c.amount|money }}</td><td class="num">{{ c.pct }}%</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    {{ chart('distribution', year, month, 'Expense distribution by category') }}
+  </div>
+  {% else %}<p class="muted">No expenses for this period.</p>{% endif %}
+</section>
+
+{% if month %}
+<section>
+  <h2>Budget violations - {{ month_names[month - 1] }} {{ year }}</h2>
+  {% if violations %}
+  <table>
+    <thead><tr><th>Category</th><th class="num">Budget</th><th class="num">Spent</th><th class="num">Over by</th><th class="num">Used</th></tr></thead>
+    <tbody>
+      {% for v in violations %}
+      <tr><td>{{ v.category_name }}</td><td class="num">{{ v.budget_amount|money }}</td><td class="num">{{ v.spent|money }}</td>
+          <td class="num neg">{{ v.over_by|money }}</td><td class="num">{{ v.utilization }}%</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">No budget limits were exceeded (or no budgets are set) for this month.</p>{% endif %}
+  {{ chart('budget', year, month, 'Budget utilization by category') }}
+</section>
+{% else %}
+<p class="muted">Choose a specific month above to see budget violations for that month.</p>
+{% endif %}
+
+<section>
+  <h2>Category by month ({{ year }})</h2>
+  {% if pivot_rows %}
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Category</th>{% for n in month_names %}<th class="num">{{ n }}</th>{% endfor %}<th class="num">Total</th></tr></thead>
+    <tbody>
+      {% for name, vals in pivot_rows %}
+      <tr><td>{{ name }}</td>{% for v in vals %}<td class="num">{{ '' if v == 0 and not loop.last else v|money }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ chart('category_month', year, month, 'Expenses by category and month') }}
+  {% else %}<p class="muted">No expenses recorded for {{ year }}.</p>{% endif %}
+</section>
+{% endblock %}

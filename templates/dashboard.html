@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chart %}
+{% block title %}Dashboard - Home Budget{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Dashboard - {{ month_names[month - 1] }} {{ year }}</h1>
+  {% with allow_year=false %}{% include "_period.html" %}{% endwith %}
+</div>
+
+<section class="cards">
+  <div class="card"><span>Total income</span><strong class="pos">{{ totals.income|money }}</strong></div>
+  <div class="card"><span>Total expenses</span><strong class="neg">{{ totals.expense|money }}</strong></div>
+  <div class="card"><span>Savings</span><strong class="{{ 'pos' if totals.savings >= 0 else 'neg' }}">{{ totals.savings|money }}</strong></div>
+  <div class="card"><span>Savings rate</span><strong>{{ totals.savings_rate }}%</strong></div>
+</section>
+
+{% if violations %}
+<section class="alert">
+  <h2>Budget limits exceeded</h2>
+  <ul>
+    {% for v in violations %}
+      <li><strong>{{ v.category_name }}</strong>: spent {{ v.spent|money }} of {{ v.budget_amount|money }}
+          (over by {{ v.over_by|money }})</li>
+    {% endfor %}
+  </ul>
+</section>
+{% elif status %}
+<section class="ok-box">All budgeted categories are within their limits this month.</section>
+{% else %}
+<section class="muted-box">No budgets set for this month. <a href="{{ url_for('budgets', year=year, month=month) }}">Set budgets</a></section>
+{% endif %}
+
+{% include "_insights.html" %}
+
+<div class="grid2">
+  <section>
+    <h2>Expense distribution</h2>
+    {{ chart('distribution', year, month, 'Expense distribution by category') }}
+  </section>
+  <section>
+    <h2>Budget utilization</h2>
+    {{ chart('budget', year, month, 'Budget utilization by category') }}
+  </section>
+</div>
+
+<section>
+  <h2>Income vs expenses - {{ year }}</h2>
+  {{ chart('monthly', year, month, 'Monthly income versus expenses') }}
+</section>
+
+<section>
+  <h2>Spending by category</h2>
+  {% if cats %}
+  <table>
+    <thead><tr><th>Category</th><th class="num">Spent</th><th class="num">Share</th></tr></thead>
+    <tbody>
+      {% for c in cats %}<tr><td>{{ c.category_name }}</td><td class="num">{{ c.amount|money }}</td><td class="num">{{ c.pct }}%</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">No expenses recorded for this month.</p>{% endif %}
+</section>
+{% endblock %}

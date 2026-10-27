@@ -1,0 +1,13 @@
+transaction_date,transaction_type,category,amount,description
+2026-11-02,expense,Groceries,450.50,Vegetables
+2026-11-02,expense,Transportation,120.00,Auto fare
+2026-11-03,income,Business,8000.00,Freelance project
+2026-11-04,expense,Utilities,1850.75,Electricity bill
+2026-11-05,expense,Healthcare,600,Pharmacy
+2026-11-06,expense,Entertainment,0.01,Smallest valid amount
+2026-13-40,expense,Groceries,300,Invalid date
+2026-11-07,expense,Groceries,-50,Negative amount
+2026-11-07,expense,Groceries,100.123,Too many decimals
+2026-11-08,expense,Gym,500,Unknown category
+2026-11-09,income,Rent,1000,Category type mismatch
+2026-11-10,expense,Groceries,,Missing amount

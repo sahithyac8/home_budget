@@ -1,0 +1,23 @@
+erDiagram
+    categories ||--o{ transactions : "classifies"
+    categories ||--o{ monthly_budgets : "has limits"
+    categories {
+        int category_id PK
+        varchar category_name
+        enum category_type "income or expense"
+    }
+    transactions {
+        int transaction_id PK
+        date transaction_date
+        enum transaction_type "income or expense"
+        int category_id FK
+        decimal amount "greater than 0"
+        varchar description "optional"
+    }
+    monthly_budgets {
+        int budget_id PK
+        int category_id FK
+        tinyint budget_month "1 to 12"
+        smallint budget_year
+        decimal budget_amount "greater than 0"
+    }
