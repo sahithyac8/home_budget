@@ -1,100 +1,139 @@
-Home Budget Tracker - unit test run
-Command: python -m unittest discover -v
-Run on: 2026-10-26 19:23 UTC, Python 3.13.17
-
+[2026-11-01 20:58:17,511] WARNING in app: SECRET_KEY is not set: using a random key, so logins reset on every restart.
 test_boundaries_exactly_100_percent_is_not_over_and_80_percent_is_warning (tests.test_analysis.AnalysisTests.test_boundaries_exactly_100_percent_is_not_over_and_80_percent_is_warning) ... ok
-test_category_expense_sorted_with_shares ... ok
-test_category_month_pivot ... ok
-test_charts_render_png_for_data_and_for_empty_data ... ok
-test_empty_dataset_everywhere ... ok
-test_month_without_income_has_negative_savings_and_zero_rate ... ok
-test_monthly_summary_has_twelve_rows_and_correct_savings ... ok
-test_no_budgets_gives_empty_table ... ok
-test_october_budget_statuses ... ok
-test_october_totals ... ok
-test_savings_report ... ok
-test_year_total_adds_up_all_months ... ok
-test_insights_for_month_without_income ... ok
-test_insights_for_october ... ok
-test_insights_levels ... ok
-test_no_history_means_no_suggestions ... ok
-test_suggestions_across_a_year_boundary ... ok
-test_suggestions_average_three_months ... ok
-test_suggestions_use_previous_months_only ... ok
-test_formula_injection_is_neutralised ... ok
-test_missing_description_exports_as_empty ... ok
-test_summary_export ... ok
-test_transactions_export ... ok
-test_blank_lines_are_skipped_and_description_is_optional ... ok
-test_boundary_amounts ... ok
-test_empty_file ... ok
-test_exactly_the_maximum_number_of_rows_is_accepted ... ok
-test_header_only_file_imports_nothing ... ok
-test_headers_are_case_and_space_insensitive ... ok
-test_missing_required_column ... ok
-test_sample_file_has_six_valid_and_six_rejected_rows ... ok
-test_short_row_is_rejected_not_crashing ... ok
-test_too_many_rows ... ok
-test_valid_rows_are_ready_to_insert ... ok
-test_add_category ... ok
-test_add_category_validation ... ok
-test_budget_suggestions_are_listed_and_can_prefill_the_form ... ok
-test_cannot_delete_category_with_transactions ... ok
-test_duplicate_category_shows_message ... ok
-test_no_suggestions_without_history ... ok
-test_save_budgets ... ok
-test_health_check_reports_database_down ... ok
+test_category_expense_sorted_with_shares (tests.test_analysis.AnalysisTests.test_category_expense_sorted_with_shares) ... ok
+test_category_month_pivot (tests.test_analysis.AnalysisTests.test_category_month_pivot) ... ok
+test_charts_render_png_for_data_and_for_empty_data (tests.test_analysis.AnalysisTests.test_charts_render_png_for_data_and_for_empty_data) ... ok
+test_empty_dataset_everywhere (tests.test_analysis.AnalysisTests.test_empty_dataset_everywhere) ... ok
+test_month_without_income_has_negative_savings_and_zero_rate (tests.test_analysis.AnalysisTests.test_month_without_income_has_negative_savings_and_zero_rate) ... ok
+test_monthly_summary_has_twelve_rows_and_correct_savings (tests.test_analysis.AnalysisTests.test_monthly_summary_has_twelve_rows_and_correct_savings) ... ok
+test_no_budgets_gives_empty_table (tests.test_analysis.AnalysisTests.test_no_budgets_gives_empty_table) ... ok
+test_october_budget_statuses (tests.test_analysis.AnalysisTests.test_october_budget_statuses) ... ok
+test_october_totals (tests.test_analysis.AnalysisTests.test_october_totals) ... ok
+test_savings_report (tests.test_analysis.AnalysisTests.test_savings_report) ... ok
+test_year_total_adds_up_all_months (tests.test_analysis.AnalysisTests.test_year_total_adds_up_all_months) ... ok
+test_insights_for_month_without_income (tests.test_analysis.FeatureTests.test_insights_for_month_without_income) ... ok
+test_insights_for_october (tests.test_analysis.FeatureTests.test_insights_for_october) ... ok
+test_insights_levels (tests.test_analysis.FeatureTests.test_insights_levels) ... ok
+test_no_history_means_no_suggestions (tests.test_analysis.FeatureTests.test_no_history_means_no_suggestions) ... ok
+test_suggestions_across_a_year_boundary (tests.test_analysis.FeatureTests.test_suggestions_across_a_year_boundary) ... ok
+test_suggestions_average_three_months (tests.test_analysis.FeatureTests.test_suggestions_average_three_months) ... ok
+test_suggestions_use_previous_months_only (tests.test_analysis.FeatureTests.test_suggestions_use_previous_months_only) ... ok
+test_another_user_sees_nothing_and_cannot_touch_the_records (tests.test_auth.DataSeparationTests.test_another_user_sees_nothing_and_cannot_touch_the_records) ... ok
+test_every_query_on_money_tables_is_limited_to_the_logged_in_user (tests.test_auth.DataSeparationTests.test_every_query_on_money_tables_is_limited_to_the_logged_in_user) ... ok
+test_imported_rows_belong_to_the_logged_in_user (tests.test_auth.DataSeparationTests.test_imported_rows_belong_to_the_logged_in_user) ... ok
+test_api_answers_401_not_a_redirect (tests.test_auth.LoggedOutTests.test_api_answers_401_not_a_redirect) ... ok
+test_every_private_page_redirects_to_login (tests.test_auth.LoggedOutTests.test_every_private_page_redirects_to_login) ... ok
+test_landing_page_has_signup_and_login_links (tests.test_auth.LoggedOutTests.test_landing_page_has_signup_and_login_links) ... ok
+test_private_actions_are_blocked_and_write_nothing (tests.test_auth.LoggedOutTests.test_private_actions_are_blocked_and_write_nothing) ... ok
+test_public_pages_open_without_login (tests.test_auth.LoggedOutTests.test_public_pages_open_without_login) ... ok
+test_unknown_page_is_still_a_friendly_404 (tests.test_auth.LoggedOutTests.test_unknown_page_is_still_a_friendly_404) ... ok
+test_correct_login_opens_the_dashboard (tests.test_auth.LoginTests.test_correct_login_opens_the_dashboard) ... ok
+test_email_is_case_insensitive (tests.test_auth.LoginTests.test_email_is_case_insensitive) ... ok
+test_five_wrong_passwords_lock_the_account_for_a_while (tests.test_auth.LoginTests.test_five_wrong_passwords_lock_the_account_for_a_while) ... ok
+test_logged_in_user_is_sent_away_from_login_and_landing (tests.test_auth.LoginTests.test_logged_in_user_is_sent_away_from_login_and_landing) ... ok
+test_login_returns_to_the_page_the_user_asked_for (tests.test_auth.LoginTests.test_login_returns_to_the_page_the_user_asked_for) ... ok
+test_logout_needs_post_and_ends_the_session (tests.test_auth.LoginTests.test_logout_needs_post_and_ends_the_session) ... ok
+test_session_of_a_deleted_user_is_rejected (tests.test_auth.LoginTests.test_session_of_a_deleted_user_is_rejected) ... ok
+test_successful_login_resets_the_failure_count (tests.test_auth.LoginTests.test_successful_login_resets_the_failure_count) ... ok
+test_unsafe_next_urls_are_ignored (tests.test_auth.LoginTests.test_unsafe_next_urls_are_ignored) ... ok
+test_wrong_password_and_unknown_email_give_the_same_message (tests.test_auth.LoginTests.test_wrong_password_and_unknown_email_give_the_same_message) ... ok
+test_duplicate_email_is_rejected (tests.test_auth.RegisterTests.test_duplicate_email_is_rejected) ... ok
+test_duplicate_email_race_is_handled (tests.test_auth.RegisterTests.test_duplicate_email_race_is_handled) ... ok
+test_form_keeps_name_and_email_but_never_the_password (tests.test_auth.RegisterTests.test_form_keeps_name_and_email_but_never_the_password) ... ok
+test_html_in_name_is_escaped (tests.test_auth.RegisterTests.test_html_in_name_is_escaped) ... ok
+test_invalid_signup_is_rejected_and_writes_nothing (tests.test_auth.RegisterTests.test_invalid_signup_is_rejected_and_writes_nothing) ... ok
+test_register_creates_user_hash_and_default_categories (tests.test_auth.RegisterTests.test_register_creates_user_hash_and_default_categories) ... ok
+test_register_logs_the_user_in (tests.test_auth.RegisterTests.test_register_logs_the_user_in) ... ok
+test_login_cookie_is_httponly_and_samesite (tests.test_auth.SafetyHeaderTests.test_login_cookie_is_httponly_and_samesite) ... ok
+test_pages_carry_safety_headers_and_are_not_cached (tests.test_auth.SafetyHeaderTests.test_pages_carry_safety_headers_and_are_not_cached) ... ok
+test_formula_injection_is_neutralised (tests.test_csv_io.ExportTests.test_formula_injection_is_neutralised) ... ok
+test_missing_description_exports_as_empty (tests.test_csv_io.ExportTests.test_missing_description_exports_as_empty) ... ok
+test_summary_export (tests.test_csv_io.ExportTests.test_summary_export) ... ok
+test_transactions_export (tests.test_csv_io.ExportTests.test_transactions_export) ... ok
+test_blank_lines_are_skipped_and_description_is_optional (tests.test_csv_io.ImportTests.test_blank_lines_are_skipped_and_description_is_optional) ... ok
+test_boundary_amounts (tests.test_csv_io.ImportTests.test_boundary_amounts) ... ok
+test_empty_file (tests.test_csv_io.ImportTests.test_empty_file) ... ok
+test_exactly_the_maximum_number_of_rows_is_accepted (tests.test_csv_io.ImportTests.test_exactly_the_maximum_number_of_rows_is_accepted) ... ok
+test_header_only_file_imports_nothing (tests.test_csv_io.ImportTests.test_header_only_file_imports_nothing) ... ok
+test_headers_are_case_and_space_insensitive (tests.test_csv_io.ImportTests.test_headers_are_case_and_space_insensitive) ... ok
+test_missing_required_column (tests.test_csv_io.ImportTests.test_missing_required_column) ... ok
+test_sample_file_has_six_valid_and_six_rejected_rows (tests.test_csv_io.ImportTests.test_sample_file_has_six_valid_and_six_rejected_rows) ... ok
+test_short_row_is_rejected_not_crashing (tests.test_csv_io.ImportTests.test_short_row_is_rejected_not_crashing) ... ok
+test_too_many_rows (tests.test_csv_io.ImportTests.test_too_many_rows) ... ok
+test_valid_rows_are_ready_to_insert (tests.test_csv_io.ImportTests.test_valid_rows_are_ready_to_insert) ... ok
+test_add_category (tests.test_routes.CategoryAndBudgetTests.test_add_category) ... ok
+test_add_category_validation (tests.test_routes.CategoryAndBudgetTests.test_add_category_validation) ... ok
+test_budget_suggestions_are_listed_and_can_prefill_the_form (tests.test_routes.CategoryAndBudgetTests.test_budget_suggestions_are_listed_and_can_prefill_the_form) ... ok
+test_cannot_delete_category_with_transactions (tests.test_routes.CategoryAndBudgetTests.test_cannot_delete_category_with_transactions) ... ok
+test_duplicate_category_shows_message (tests.test_routes.CategoryAndBudgetTests.test_duplicate_category_shows_message) ... ok
+test_no_suggestions_without_history (tests.test_routes.CategoryAndBudgetTests.test_no_suggestions_without_history) ... ok
+test_save_budgets (tests.test_routes.CategoryAndBudgetTests.test_save_budgets) ... ok
+test_health_check_reports_database_down (tests.test_routes.DatabaseErrorTests.test_health_check_reports_database_down) ... ok
+test_pages_show_friendly_503_instead_of_a_stack_trace (tests.test_routes.DatabaseErrorTests.test_pages_show_friendly_503_instead_of_a_stack_trace) ... [2026-11-01 20:58:19,140] ERROR in app: Database error: MySQL server is not reachable
+[2026-11-01 20:58:19,141] ERROR in app: Database error: MySQL server is not reachable
+[2026-11-01 20:58:19,142] ERROR in app: Database error: MySQL server is not reachable
+[2026-11-01 20:58:19,143] ERROR in app: Database error: MySQL server is not reachable
+[2026-11-01 20:58:19,143] ERROR in app: Database error: MySQL server is not reachable
 ok
+test_write_failure_returns_503 (tests.test_routes.DatabaseErrorTests.test_write_failure_returns_503) ... [2026-11-01 20:58:19,144] ERROR in app: Database error: MySQL server is not reachable
 ok
-test_all_pages_and_charts_work_with_no_data ... ok
-test_empty_exports_contain_only_headers ... ok
-test_export_all_transactions ... ok
-test_export_filtered_by_month ... ok
-test_export_monthly_summary ... ok
+test_all_pages_and_charts_work_with_no_data (tests.test_routes.EmptyDatabaseTests.test_all_pages_and_charts_work_with_no_data) ... ok
+test_empty_exports_contain_only_headers (tests.test_routes.EmptyDatabaseTests.test_empty_exports_contain_only_headers) ... ok
+test_export_all_transactions (tests.test_routes.ExportImportRouteTests.test_export_all_transactions) ... ok
+test_export_filtered_by_month (tests.test_routes.ExportImportRouteTests.test_export_filtered_by_month) ... ok
+test_export_monthly_summary (tests.test_routes.ExportImportRouteTests.test_export_monthly_summary) ... ok
+test_import_database_failure_is_reported (tests.test_routes.ExportImportRouteTests.test_import_database_failure_is_reported) ... [2026-11-01 20:58:19,494] ERROR in app: Database error: lost connection
 ok
 test_import_rejects_non_utf8_file (tests.test_routes.ExportImportRouteTests.test_import_rejects_non_utf8_file) ... ok
-test_import_rejects_oversized_file ... ok
-test_import_rejects_wrong_columns ... ok
-test_import_sample_file_saves_valid_rows_and_lists_rejected_rows ... ok
-test_import_with_only_invalid_rows_writes_nothing ... ok
-test_import_without_a_file ... ok
-test_api_budget_status ... ok
-test_api_insights ... ok
-test_api_summary ... ok
-test_api_transactions ... ok
-test_health_ok ... ok
-test_charts_return_png ... ok
-test_dashboard_lists_violations_and_insights ... ok
-test_every_page_loads_with_sample_data ... ok
-test_out_of_range_period_values_are_clamped ... ok
-test_reports_show_deficit_month_and_captions ... ok
-test_unknown_chart_and_whole_year_budget_chart ... ok
+test_import_rejects_oversized_file (tests.test_routes.ExportImportRouteTests.test_import_rejects_oversized_file) ... ok
+test_import_rejects_wrong_columns (tests.test_routes.ExportImportRouteTests.test_import_rejects_wrong_columns) ... ok
+test_import_sample_file_saves_valid_rows_and_lists_rejected_rows (tests.test_routes.ExportImportRouteTests.test_import_sample_file_saves_valid_rows_and_lists_rejected_rows) ... ok
+test_import_with_only_invalid_rows_writes_nothing (tests.test_routes.ExportImportRouteTests.test_import_with_only_invalid_rows_writes_nothing) ... ok
+test_import_without_a_file (tests.test_routes.ExportImportRouteTests.test_import_without_a_file) ... ok
+test_api_budget_status (tests.test_routes.HealthAndApiTests.test_api_budget_status) ... ok
+test_api_insights (tests.test_routes.HealthAndApiTests.test_api_insights) ... ok
+test_api_summary (tests.test_routes.HealthAndApiTests.test_api_summary) ... /usr/local/lib/python3.13/site-packages/pandas/core/indexes/base.py:5101: ResourceWarning: unclosed file <_io.FileIO name=11 mode='rb+' closefd=True>
+  @property
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_api_transactions (tests.test_routes.HealthAndApiTests.test_api_transactions) ... ok
+test_health_ok (tests.test_routes.HealthAndApiTests.test_health_ok) ... ok
+test_charts_return_png (tests.test_routes.PageTests.test_charts_return_png) ... ok
+test_dashboard_lists_violations_and_insights (tests.test_routes.PageTests.test_dashboard_lists_violations_and_insights) ... ok
+test_every_page_loads_with_sample_data (tests.test_routes.PageTests.test_every_page_loads_with_sample_data) ... ok
+test_out_of_range_period_values_are_clamped (tests.test_routes.PageTests.test_out_of_range_period_values_are_clamped) ... ok
+test_reports_show_deficit_month_and_captions (tests.test_routes.PageTests.test_reports_show_deficit_month_and_captions) ... ok
+test_unknown_chart_and_whole_year_budget_chart (tests.test_routes.PageTests.test_unknown_chart_and_whole_year_budget_chart) ... ok
 test_unknown_page_shows_friendly_404 (tests.test_routes.PageTests.test_unknown_page_shows_friendly_404) ... ok
-test_add_rejects_invalid_input_and_writes_nothing ... ok
-test_add_valid_transaction ... ok
-test_boundary_amounts_are_accepted ... ok
-test_delete_needs_post ... ok
-test_delete_transaction ... ok
-test_edit_invalid_does_not_update ... ok
+test_add_rejects_invalid_input_and_writes_nothing (tests.test_routes.TransactionCrudTests.test_add_rejects_invalid_input_and_writes_nothing) ... ok
+test_add_valid_transaction (tests.test_routes.TransactionCrudTests.test_add_valid_transaction) ... ok
+test_boundary_amounts_are_accepted (tests.test_routes.TransactionCrudTests.test_boundary_amounts_are_accepted) ... ok
+test_delete_needs_post (tests.test_routes.TransactionCrudTests.test_delete_needs_post) ... ok
+test_delete_transaction (tests.test_routes.TransactionCrudTests.test_delete_transaction) ... ok
+test_edit_invalid_does_not_update (tests.test_routes.TransactionCrudTests.test_edit_invalid_does_not_update) ... ok
 test_edit_missing_record_is_404 (tests.test_routes.TransactionCrudTests.test_edit_missing_record_is_404) ... ok
-test_edit_transaction ... ok
-test_form_is_shown_again_with_the_users_input ... ok
-test_invalid_month_filter_is_ignored_with_a_message ... ok
-test_invalid_amounts_are_rejected ... ok
-test_valid_amounts_including_boundaries ... ok
-test_invalid_dates ... ok
-test_valid_date ... ok
-test_bad_type ... ok
-test_category_must_match_type ... ok
+test_edit_transaction (tests.test_routes.TransactionCrudTests.test_edit_transaction) ... ok
+test_form_is_shown_again_with_the_users_input (tests.test_routes.TransactionCrudTests.test_form_is_shown_again_with_the_users_input) ... ok
+test_invalid_month_filter_is_ignored_with_a_message (tests.test_routes.TransactionCrudTests.test_invalid_month_filter_is_ignored_with_a_message) ... ok
+test_invalid_amounts_are_rejected (tests.test_validation.AmountTests.test_invalid_amounts_are_rejected) ... ok
+test_valid_amounts_including_boundaries (tests.test_validation.AmountTests.test_valid_amounts_including_boundaries) ... ok
+test_invalid_dates (tests.test_validation.DateTests.test_invalid_dates) ... ok
+test_valid_date (tests.test_validation.DateTests.test_valid_date) ... ok
+test_invalid_registrations_are_rejected (tests.test_validation.RegistrationTests.test_invalid_registrations_are_rejected) ... ok
+test_password_is_never_returned (tests.test_validation.RegistrationTests.test_password_is_never_returned) ... ok
+test_password_length_boundaries (tests.test_validation.RegistrationTests.test_password_length_boundaries) ... ok
+test_valid_registration_is_cleaned (tests.test_validation.RegistrationTests.test_valid_registration_is_cleaned) ... ok
+test_bad_type (tests.test_validation.TransactionTests.test_bad_type) ... ok
+test_category_must_match_type (tests.test_validation.TransactionTests.test_category_must_match_type) ... ok
 test_description_is_cut_to_255_characters (tests.test_validation.TransactionTests.test_description_is_cut_to_255_characters) ... ok
-test_missing_category ... ok
-test_missing_description_is_allowed ... ok
-test_several_errors_reported_together ... ok
-test_valid_expense ... ok
-test_valid_income ... ok
-test_year_range_boundaries ... ok
+test_missing_category (tests.test_validation.TransactionTests.test_missing_category) ... ok
+test_missing_description_is_allowed (tests.test_validation.TransactionTests.test_missing_description_is_allowed) ... ok
+test_several_errors_reported_together (tests.test_validation.TransactionTests.test_several_errors_reported_together) ... ok
+test_valid_expense (tests.test_validation.TransactionTests.test_valid_expense) ... ok
+test_valid_income (tests.test_validation.TransactionTests.test_valid_income) ... ok
+test_year_range_boundaries (tests.test_validation.TransactionTests.test_year_range_boundaries) ... ok
 
 ----------------------------------------------------------------------
-Ran 91 tests in 1.926s
+Ran 123 tests in 2.808s
 
 OK

@@ -4,7 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
-import pymysql
+from tests.helpers import pymysql  # the test helpers provide a stand-in when the driver is not installed
 
 from tests.helpers import AppTestCase
 
@@ -15,7 +15,7 @@ GOOD_FORM = {"transaction_date": "2026-10-24", "transaction_type": "expense", "c
 
 class PageTests(AppTestCase):
     def test_every_page_loads_with_sample_data(self):
-        for url in ["/", "/?year=2026&month=10", "/transactions", "/transactions?type=expense&month=2026-10",
+        for url in ["/dashboard", "/dashboard?year=2026&month=10", "/transactions", "/transactions?type=expense&month=2026-10",
                     "/transactions/add", "/transactions/15/edit", "/categories", "/budgets?year=2026&month=10",
                     "/budgets?year=2026&month=11", "/reports?year=2026&month=0", "/reports?year=2026&month=10",
                     "/import"]:
@@ -37,7 +37,7 @@ class PageTests(AppTestCase):
         self.assertIn("Page not found", self.get_text("/no-such-page", 404))
 
     def test_dashboard_lists_violations_and_insights(self):
-        html = self.get_text("/?year=2026&month=10")
+        html = self.get_text("/dashboard?year=2026&month=10")
         self.assertIn("Budget limits exceeded", html)
         self.assertIn("Entertainment", html)
         self.assertIn("₹61,500.00", html)
@@ -45,8 +45,8 @@ class PageTests(AppTestCase):
         self.assertIn("You saved ₹27,100.00", html)
 
     def test_out_of_range_period_values_are_clamped(self):
-        self.get_text("/?year=1900&month=99")
-        self.get_text("/?month=0")  # the dashboard always shows a single month
+        self.get_text("/dashboard?year=1900&month=99")
+        self.get_text("/dashboard?month=0")  # the dashboard always shows a single month
         self.get_text("/reports?year=abc&month=xyz")
 
     def test_reports_show_deficit_month_and_captions(self):
@@ -163,7 +163,7 @@ class EmptyDatabaseTests(AppTestCase):
     fake_kwargs = {"transactions": [], "budgets": []}
 
     def test_all_pages_and_charts_work_with_no_data(self):
-        for url in ["/", "/transactions", "/budgets", "/reports", "/reports?month=10", "/categories", "/import",
+        for url in ["/dashboard", "/transactions", "/budgets", "/reports", "/reports?month=10", "/categories", "/import",
                     "/api/transactions", "/api/summary", "/api/budget-status", "/api/insights"]:
             with self.subTest(url=url):
                 self.get_text(url)
@@ -187,7 +187,7 @@ class DatabaseErrorTests(AppTestCase):
         self.assertEqual(r.get_json(), {"status": "error", "database": "down"})
 
     def test_pages_show_friendly_503_instead_of_a_stack_trace(self):
-        for url in ["/", "/transactions", "/reports", "/budgets", "/api/summary"]:
+        for url in ["/dashboard", "/transactions", "/reports", "/budgets", "/api/summary"]:
             with self.subTest(url=url):
                 self.assertIn("Database unavailable", self.get_text(url, 503))
 

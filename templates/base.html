@@ -3,28 +3,44 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0e2c2b">
   <title>{% block title %}Home Budget{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <header>
+  {% set ep = request.endpoint or '' %}
+  <header class="site-header">
     <div class="wrap nav">
-      <strong class="brand">Home Budget</strong>
-      <nav>
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('transactions') }}">Transactions</a>
-        <a href="{{ url_for('categories') }}">Categories</a>
-        <a href="{{ url_for('budgets') }}">Budgets</a>
-        <a href="{{ url_for('reports') }}">Reports</a>
-        <a href="{{ url_for('import_transactions') }}">Import / Export</a>
+      <a class="brand" href="{{ url_for('landing') }}">Home Budget</a>
+      {% if user %}
+      <nav aria-label="Main">
+        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if ep == 'dashboard' }}">Dashboard</a>
+        <a href="{{ url_for('transactions') }}" class="{{ 'active' if ep in ('transactions', 'add_transaction', 'edit_transaction') }}">Transactions</a>
+        <a href="{{ url_for('categories') }}" class="{{ 'active' if ep == 'categories' }}">Categories</a>
+        <a href="{{ url_for('budgets') }}" class="{{ 'active' if ep == 'budgets' }}">Budgets</a>
+        <a href="{{ url_for('reports') }}" class="{{ 'active' if ep == 'reports' }}">Reports</a>
+        <a href="{{ url_for('import_transactions') }}" class="{{ 'active' if ep == 'import_transactions' }}">Import / Export</a>
       </nav>
+      <div class="nav-user">
+        <span>{{ user.full_name }}</span>
+        <form method="post" action="{{ url_for('auth.logout') }}"><button type="submit">Log out</button></form>
+      </div>
+      {% else %}
+      <div class="nav-actions">
+        <a href="{{ url_for('auth.login') }}">Log in</a>
+        <a class="btn sun" href="{{ url_for('auth.register') }}">Sign up</a>
+      </div>
+      {% endif %}
     </div>
   </header>
-  <main class="wrap">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
-    {% endwith %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="wrap flashes">
+      {% for cat, msg in messages %}<div class="flash {{ cat }}" role="status">{{ msg }}</div>{% endfor %}
+    </div>{% endif %}
+  {% endwith %}
+  <main class="{% block main_class %}wrap page{% endblock %}">
     {% block content %}{% endblock %}
   </main>
+  {% block footer %}{% endblock %}
 </body>
 </html>

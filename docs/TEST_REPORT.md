@@ -2,20 +2,21 @@
 
 ## 1. How to run
 ```bash
-python -m unittest discover -v        # 91 tests, about 2 seconds, no MySQL server needed
+python -m unittest discover -v        # 123 tests, about 3 seconds, no MySQL server needed
 ```
 The automated tests replace MySQL with `tests/helpers.py::FakeDB`, an in-memory copy of `sample_data.sql`,
 so they run anywhere and test the application's own logic. Section 4 lists the manual checks to run once
 against the real MySQL server before the demonstration.
 
-**Result of the last run: 91 tests, 91 passed, 0 failed.** Full output: `docs/test_results.txt`.
+**Result of the last run: 123 tests, 123 passed, 0 failed.** Full output: `docs/test_results.txt`.
 
 | Test file | Tests | Covers |
 |---|---|---|
-| `tests/test_validation.py` | 13 | Amount, date and transaction rules |
+| `tests/test_validation.py` | 17 | Amount, date, transaction and sign-up rules |
 | `tests/test_analysis.py` | 19 | Totals, savings, category analysis, budget status, insights, suggestions, charts |
 | `tests/test_csv_io.py` | 15 | CSV export, formula-injection guard, import validation |
 | `tests/test_routes.py` | 44 | Pages, CRUD, categories, budgets, API, health, export/import, empty and failing database |
+| `tests/test_auth.py` | 28 | Sign up, log in, log out, login gate, lock after 5 wrong passwords, unsafe redirects, each user's data kept separate, safety headers |
 
 ## 2. Test cases by type (examples; every test name is in `test_results.txt`)
 | Type | Example cases | Expected result | Result |
@@ -27,6 +28,7 @@ against the real MySQL server before the demonstration.
 | Database errors | MySQL unreachable (`/health`, every page, a write, a CSV import); duplicate category; deleting a category that has transactions | HTTP 503 with a friendly page, or a clear message; no stack trace | Pass |
 | Data quality (import) | `sample_import.csv`: 6 valid rows saved, 6 rejected with reasons; wrong columns; empty file; non-UTF-8 file; file over 1 MB | Valid rows saved only; clear error for bad files | Pass |
 | Security | Formula injection in exported text (`=`, `+`, `@`) | Prefixed with an apostrophe | Pass |
+| Accounts | Wrong password and unknown email; 5 wrong tries; `next=//evil.example`; page opened without login; another user's record id | Same message for both failures; locked; ignored; redirect to login (API: 401); 404 or nothing shown | Pass |
 
 ## 3. Defect found and fixed during testing
 Importing a row such as `income, Rent` (a category name that exists only under the other type) first showed the

@@ -2,6 +2,7 @@
 
 Nothing here touches the database, so every rule can be unit-tested on its own.
 """
+import re
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
@@ -69,3 +70,28 @@ def validate_transaction(date_text, ttype, amount_text, category, description=""
         "description": (description or "").strip()[:255],
     }
     return data, errors
+
+
+# ---------- accounts ----------
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MIN_PASSWORD, MAX_PASSWORD = 8, 128
+
+
+def validate_registration(name, email, password, confirm):
+    """Validate the sign-up form. Returns (clean_values, errors); the password is never returned."""
+    errors = []
+    name = " ".join((name or "").split())      # trim and collapse repeated spaces
+    email = (email or "").strip().lower()      # emails are stored in lower case
+    password = password or ""
+
+    if not 2 <= len(name) <= 60:
+        errors.append("Enter your name (2 to 60 characters).")
+    if len(email) > 120 or not EMAIL_PATTERN.match(email):
+        errors.append("Enter a valid email address.")
+    if not MIN_PASSWORD <= len(password) <= MAX_PASSWORD:
+        errors.append(f"Password must be {MIN_PASSWORD} to {MAX_PASSWORD} characters long.")
+    elif not (any(c.isalpha() for c in password) and any(c.isdigit() for c in password)):
+        errors.append("Password must contain at least one letter and one number.")
+    if password != (confirm or ""):
+        errors.append("The two passwords do not match.")
+    return {"full_name": name, "email": email}, errors

@@ -2,7 +2,7 @@
 import unittest
 from decimal import Decimal
 
-from validation import parse_amount, parse_date, validate_transaction
+from validation import parse_amount, parse_date, validate_registration, validate_transaction
 
 EXPENSE_CAT = {"category_id": 5, "category_name": "Groceries", "category_type": "expense"}
 INCOME_CAT = {"category_id": 1, "category_name": "Salary", "category_type": "income"}
@@ -82,6 +82,37 @@ class TransactionTests(unittest.TestCase):
         data, errors = validate_transaction("2026-10-24", "expense", "10", EXPENSE_CAT, None)
         self.assertEqual(errors, [])
         self.assertEqual(data["description"], "")
+
+
+class RegistrationTests(unittest.TestCase):
+    GOOD = ("  Asha   Rao ", " Asha@Example.COM ", "Budget2026", "Budget2026")
+
+    def test_valid_registration_is_cleaned(self):
+        values, errors = validate_registration(*self.GOOD)
+        self.assertEqual(errors, [])
+        self.assertEqual(values, {"full_name": "Asha Rao", "email": "asha@example.com"})
+
+    def test_password_is_never_returned(self):
+        values, _ = validate_registration(*self.GOOD)
+        self.assertNotIn("password", " ".join(map(str, values.values())).lower())
+
+    def test_invalid_registrations_are_rejected(self):
+        name, email, pw, confirm = self.GOOD
+        bad = [("A", email, pw, confirm), ("", email, pw, confirm), ("x" * 61, email, pw, confirm),
+               (name, "not-an-email", pw, confirm), (name, "a@b", pw, confirm), (name, "a b@c.com", pw, confirm),
+               (name, "a" * 120 + "@x.com", pw, confirm),
+               (name, email, "short1", "short1"), (name, email, "alllettersonly", "alllettersonly"),
+               (name, email, "12345678", "12345678"), (name, email, "x1" * 70, "x1" * 70),
+               (name, email, pw, "Different2026"), (None, None, None, None)]
+        for args in bad:
+            with self.subTest(args=args):
+                self.assertTrue(validate_registration(*args)[1])
+
+    def test_password_length_boundaries(self):
+        name, email, _, _ = self.GOOD
+        self.assertEqual(validate_registration(name, email, "abcdefg1", "abcdefg1")[1], [])   # 8 characters
+        self.assertEqual(validate_registration(name, email, "a1" * 64, "a1" * 64)[1], [])      # 128 characters
+        self.assertTrue(validate_registration(name, email, "abcdef1", "abcdef1")[1])          # 7 characters
 
 
 if __name__ == "__main__":

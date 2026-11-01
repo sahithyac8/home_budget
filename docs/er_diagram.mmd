@@ -1,13 +1,25 @@
 erDiagram
+    users ||--o{ categories : "owns"
+    users ||--o{ transactions : "records"
+    users ||--o{ monthly_budgets : "sets"
     categories ||--o{ transactions : "classifies"
     categories ||--o{ monthly_budgets : "has limits"
+    users {
+        int user_id PK
+        varchar full_name
+        varchar email "unique"
+        varchar password_hash "salted hash"
+        timestamp created_at
+    }
     categories {
         int category_id PK
+        int user_id FK
         varchar category_name
         enum category_type "income or expense"
     }
     transactions {
         int transaction_id PK
+        int user_id FK
         date transaction_date
         enum transaction_type "income or expense"
         int category_id FK
@@ -16,6 +28,7 @@ erDiagram
     }
     monthly_budgets {
         int budget_id PK
+        int user_id FK
         int category_id FK
         tinyint budget_month "1 to 12"
         smallint budget_year

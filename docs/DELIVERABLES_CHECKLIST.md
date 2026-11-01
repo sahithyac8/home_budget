@@ -9,7 +9,7 @@ Status: **Done** = in this folder and checked. **Team to do** = needs your names
 | D3 | Working application, CRUD, validation, error handling, database connectivity | `app.py`, `validation.py`, `db.py`; 400/404/413/503 handling; `/health`; JSON API | Done; run against your MySQL (M1 to M8) |
 | D4 | Pandas/NumPy analysis with formulas, filters, assumptions, summary tables | `analysis.py`, `docs/ANALYSIS_METHODOLOGY.md` | Done |
 | D5 | At least 3 charts, each with title, axes, units and interpretation | 4 charts in `charts.py`; captions in `templates/_macros.html`; interpretations in `docs/ANALYSIS_METHODOLOGY.md` | Done |
-| D6 | Tests: normal, invalid, empty, boundary, database errors, with evidence | `tests/` (91 tests), `docs/TEST_REPORT.md`, `docs/test_results.txt` | Done; complete manual table M1 to M8 |
+| D6 | Tests: normal, invalid, empty, boundary, database errors, with evidence | `tests/` (123 tests), `docs/TEST_REPORT.md`, `docs/test_results.txt` | Done; complete manual table M1 to M8 |
 | D7 | README setup, synopsis, API list, schema, methodology, screenshots, limitations | `README.md`, `docs/PROPOSAL.md`, `docs/screenshots/` | Done; retake screenshots from your own MySQL run if you can |
 | D8 | 8 to 12 minute demonstration | `docs/DEMO_PLAN.md`; slides and speaking script | Done; rehearse once with a timer |
 | Final | Final report | Combine `PROPOSAL.md`, `DATA_DICTIONARY.md`, `ANALYSIS_METHODOLOGY.md`, `TEST_REPORT.md` and the screenshots into one document | Team to do |

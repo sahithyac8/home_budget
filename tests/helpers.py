@@ -84,10 +84,35 @@ BUDGETS = [  # (category_id, month, year, amount)
 ]
 
 
+USER_ID = 1
+USERS = [{"user_id": USER_ID, "full_name": "Demo User", "email": "demo@example.com",
+          "password_hash": None}]  # the hash is filled in by the login tests
+
+
+class FakeCursor:
+    """Just enough of a database cursor for db.run_in_transaction()."""
+
+    def __init__(self, fake):
+        self.fake, self.lastrowid = fake, 0
+
+    def execute(self, sql, args=None):
+        self.fake._check()
+        if self.fake.execute_error:
+            raise self.fake.execute_error
+        self.fake.writes.append((" ".join(sql.split()), args))
+        self.lastrowid = len(self.fake.users) + 1
+
+    def executemany(self, sql, rows):
+        self.fake._check()
+        self.fake.writes.append(("MANY " + " ".join(sql.split()), list(rows)))
+
+
 class FakeDB:
-    """Answers the SQL the app sends, from lists in memory. Records every write."""
+    """Answers the SQL the app sends, from lists in memory. Records every query and write."""
 
     def __init__(self, transactions=None, budgets=None):
+        self.users = [dict(u) for u in USERS]
+        self.queries = []          # every (sql, args) sent to query_all / query_one
         self.categories = [dict(c) for c in CATEGORIES]
         self.transactions = [dict(t) for t in (TRANSACTIONS if transactions is None else transactions)]
         self.budgets = list(BUDGETS if budgets is None else budgets)
@@ -102,8 +127,11 @@ class FakeDB:
     def query_all(self, sql, args=None):
         self._check()
         s = " ".join(sql.split())
+        self.queries.append((s, args))
+        if args and args[0] != USER_ID:
+            return []  # every record in this fake belongs to the demo user, so anyone else sees nothing
         if "FROM monthly_budgets b" in s:
-            year, month = args
+            _, year, month = args
             return [{"category_id": cid, "category_name": _NAME[cid], "budget_amount": Decimal(a)}
                     for cid, m, y, a in self.budgets if (y, m) == (year, month)]
         if "COUNT(t.transaction_id)" in s:
@@ -120,8 +148,15 @@ class FakeDB:
     def query_one(self, sql, args=None):
         self._check()
         s = " ".join(sql.split())
+        self.queries.append((s, args))
         if s.startswith("SELECT 1"):
             return {"ok": 1}
+        if "FROM users WHERE user_id" in s:
+            return next((u for u in self.users if u["user_id"] == args[0]), None)
+        if "FROM users WHERE email" in s:
+            return next((u for u in self.users if u["email"] == args[0]), None)
+        if args and len(args) > 1 and args[1] != USER_ID:
+            return None  # (id, user_id): the record belongs to the demo user only
         if "FROM categories WHERE category_id" in s:
             return next((c for c in self.categories if c["category_id"] == args[0]), None)
         if "FROM transactions WHERE transaction_id" in s:
@@ -142,19 +177,31 @@ class FakeDB:
         self.writes.append(("MANY " + " ".join(sql.split()), list(rows)))
         return len(rows)
 
+    def run_in_transaction(self, work):
+        self._check()
+        return work(FakeCursor(self))
+
 
 class AppTestCase(unittest.TestCase):
     """Starts the Flask test client with the database replaced by FakeDB."""
     fake_kwargs = {}
+    logged_in = True
 
     def setUp(self):
         self.fake = FakeDB(**self.fake_kwargs)
-        for name in ("query_all", "query_one", "execute", "execute_many"):
+        for name in ("query_all", "query_one", "execute", "execute_many", "run_in_transaction"):
             patcher = mock.patch.object(db, name, getattr(self.fake, name))
             patcher.start()
             self.addCleanup(patcher.stop)
         app.config["TESTING"] = True
         self.client = app.test_client()
+        if self.logged_in:
+            self.log_in()
+
+    def log_in(self, user_id=USER_ID):
+        """Pretend the person has already logged in (the login form itself is tested in test_auth.py)."""
+        with self.client.session_transaction() as session:
+            session["user_id"] = user_id
 
     def get_text(self, url, status=200):
         response = self.client.get(url)

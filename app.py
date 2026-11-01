@@ -3,24 +3,31 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 import pymysql
-from flask import (Flask, Response, abort, flash, jsonify, redirect,
-                   render_template, request, url_for)
+from flask import (Flask, Response, abort, flash, g, jsonify, redirect,
+                   render_template, request, session, url_for)
 
 import analysis
 import charts
 import csv_io
 import db
-from config import Config
+from auth import auth
+from config import SECRET_KEY_IS_RANDOM, Config
 from validation import validate_transaction
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config["MAX_CONTENT_LENGTH"] = 1_000_000  # reject uploads over 1 MB
 app.teardown_appcontext(db.close_db)
+app.register_blueprint(auth)  # /register, /login, /logout live in auth.py
+if SECRET_KEY_IS_RANDOM:
+    app.logger.warning("SECRET_KEY is not set: using a random key, so logins reset on every restart.")
 
 INSERT_TRANSACTION = """INSERT INTO transactions
-    (transaction_date, transaction_type, category_id, amount, description)
-    VALUES (%(transaction_date)s, %(transaction_type)s, %(category_id)s, %(amount)s, %(description)s)"""
+    (user_id, transaction_date, transaction_type, category_id, amount, description)
+    VALUES (%(user_id)s, %(transaction_date)s, %(transaction_type)s, %(category_id)s, %(amount)s, %(description)s)"""
+
+# Pages a visitor can open without logging in. Everything else needs an account.
+PUBLIC_ENDPOINTS = {"landing", "auth.login", "auth.register"}
 
 
 # ---------- helpers ----------
@@ -31,7 +38,40 @@ def money(value):
 
 @app.context_processor
 def inject_globals():
-    return {"month_names": analysis.MONTH_NAMES, "today": date.today()}
+    return {"month_names": analysis.MONTH_NAMES, "today": date.today(), "user": g.get("user")}
+
+
+def uid():
+    """The id of the logged-in user. Every query on money data filters by it."""
+    return g.user["user_id"]
+
+
+@app.before_request
+def load_user_and_require_login():
+    """Find the logged-in user; send everyone else to the login page (pages are private by default)."""
+    g.user = None
+    if request.endpoint in ("static", "health"):
+        return None
+    if "user_id" in session:
+        g.user = db.query_one("SELECT user_id, full_name FROM users WHERE user_id = %s", (session["user_id"],))
+        if g.user is None:
+            session.clear()  # the account no longer exists
+    if request.endpoint is not None and g.user is None and request.endpoint not in PUBLIC_ENDPOINTS:
+        if request.path.startswith("/api/"):
+            return jsonify(error="Please log in first."), 401
+        target = request.full_path.rstrip("?") if request.method == "GET" else None
+        return redirect(url_for("auth.login", next=target))
+    return None
+
+
+@app.after_request
+def add_safety_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    if request.endpoint != "static":
+        response.headers.setdefault("Cache-Control", "no-store")  # logged-in pages are never cached
+    return response
 
 
 def period_args(default_month=None):
@@ -51,20 +91,22 @@ def fetch_transactions():
         """SELECT t.transaction_id, t.transaction_date, t.transaction_type,
                   t.category_id, c.category_name, t.amount, t.description
            FROM transactions t JOIN categories c ON c.category_id = t.category_id
-           ORDER BY t.transaction_date DESC, t.transaction_id DESC""")
+           WHERE t.user_id = %s
+           ORDER BY t.transaction_date DESC, t.transaction_id DESC""", (uid(),))
 
 
 def fetch_budgets(year, month):
     return db.query_all(
         """SELECT b.category_id, c.category_name, b.budget_amount
            FROM monthly_budgets b JOIN categories c ON c.category_id = b.category_id
-           WHERE b.budget_year = %s AND b.budget_month = %s""", (year, month))
+           WHERE b.user_id = %s AND b.budget_year = %s AND b.budget_month = %s""", (uid(), year, month))
 
 
 def parse_transaction(form):
     """Validate the transaction form (rules live in validation.py). Returns (data, errors)."""
     cat_id = form.get("category_id", type=int)
-    category = (db.query_one("SELECT * FROM categories WHERE category_id = %s", (cat_id,))
+    category = (db.query_one("SELECT * FROM categories WHERE category_id = %s AND user_id = %s",
+                              (cat_id, uid()))
                 if cat_id else None)
     data, errors = validate_transaction(form.get("transaction_date"), form.get("transaction_type"),
                                         form.get("amount"), category, form.get("description"))
@@ -117,8 +159,15 @@ def server_error(_):
     return error_page(500, "Something went wrong", "An unexpected error occurred. Please try again.")
 
 
-# ---------- dashboard ----------
+# ---------- landing page and dashboard ----------
 @app.route("/")
+def landing():
+    if g.user:
+        return redirect(url_for("dashboard"))
+    return render_template("landing.html")
+
+
+@app.route("/dashboard")
 def dashboard():
     year, month = period_args()
     month = month or date.today().month  # the dashboard always shows one month
@@ -139,8 +188,8 @@ def transactions():
     cat = request.args.get("category", type=int)
     ym = request.args.get("month", "")
     sql = """SELECT t.*, c.category_name FROM transactions t
-             JOIN categories c ON c.category_id = t.category_id WHERE 1=1"""
-    args = []
+             JOIN categories c ON c.category_id = t.category_id WHERE t.user_id = %s"""
+    args = [uid()]
     if ttype in ("income", "expense"):
         sql += " AND t.transaction_type = %s"
         args.append(ttype)
@@ -157,13 +206,14 @@ def transactions():
             flash("Ignored invalid month filter.", "error")
     sql += " ORDER BY t.transaction_date DESC, t.transaction_id DESC LIMIT 500"
     rows = db.query_all(sql, args)
-    categories = db.query_all("SELECT * FROM categories ORDER BY category_type, category_name")
+    categories = db.query_all("SELECT * FROM categories WHERE user_id = %s ORDER BY category_type, category_name",
+                              (uid(),))
     return render_template("transactions.html", rows=rows, categories=categories,
                            f_type=ttype, f_cat=cat, f_month=ym)
 
 
 def _form_page(txn, errors=None):
-    categories = db.query_all("SELECT * FROM categories ORDER BY category_name")
+    categories = db.query_all("SELECT * FROM categories WHERE user_id = %s ORDER BY category_name", (uid(),))
     return render_template("transaction_form.html", txn=txn, categories=categories,
                            errors=errors or [])
 
@@ -174,6 +224,7 @@ def add_transaction():
         data, errors = parse_transaction(request.form)
         if errors:
             return _form_page(data, errors), 400
+        data["user_id"] = uid()
         db.execute(INSERT_TRANSACTION, data)
         flash("Transaction added.", "success")
         return redirect(url_for("transactions"))
@@ -182,7 +233,8 @@ def add_transaction():
 
 @app.route("/transactions/<int:txn_id>/edit", methods=["GET", "POST"])
 def edit_transaction(txn_id):
-    existing = db.query_one("SELECT * FROM transactions WHERE transaction_id = %s", (txn_id,))
+    existing = db.query_one("SELECT * FROM transactions WHERE transaction_id = %s AND user_id = %s",
+                            (txn_id, uid()))
     if not existing:
         abort(404)
     if request.method == "POST":
@@ -190,10 +242,11 @@ def edit_transaction(txn_id):
         data["transaction_id"] = txn_id
         if errors:
             return _form_page(data, errors), 400
+        data["user_id"] = uid()
         db.execute("""UPDATE transactions SET transaction_date=%(transaction_date)s,
                       transaction_type=%(transaction_type)s, category_id=%(category_id)s,
                       amount=%(amount)s, description=%(description)s
-                      WHERE transaction_id=%(transaction_id)s""", data)
+                      WHERE transaction_id=%(transaction_id)s AND user_id=%(user_id)s""", data)
         flash("Transaction updated.", "success")
         return redirect(url_for("transactions"))
     return _form_page(existing)
@@ -201,7 +254,7 @@ def edit_transaction(txn_id):
 
 @app.route("/transactions/<int:txn_id>/delete", methods=["POST"])
 def delete_transaction(txn_id):
-    db.execute("DELETE FROM transactions WHERE transaction_id = %s", (txn_id,))
+    db.execute("DELETE FROM transactions WHERE transaction_id = %s AND user_id = %s", (txn_id, uid()))
     flash("Transaction deleted.", "success")
     return redirect(request.referrer or url_for("transactions"))
 
@@ -216,22 +269,23 @@ def categories():
             flash("Enter a category name (max 50 characters) and a type.", "error")
         else:
             try:
-                db.execute("INSERT INTO categories (category_name, category_type) VALUES (%s, %s)",
-                           (name, ctype))
+                db.execute("INSERT INTO categories (user_id, category_name, category_type) VALUES (%s, %s, %s)",
+                           (uid(), name, ctype))
                 flash("Category added.", "success")
             except pymysql.err.IntegrityError:
                 flash("That category already exists.", "error")
         return redirect(url_for("categories"))
     rows = db.query_all("""SELECT c.*, COUNT(t.transaction_id) AS txn_count
                            FROM categories c LEFT JOIN transactions t ON t.category_id = c.category_id
-                           GROUP BY c.category_id ORDER BY c.category_type, c.category_name""")
+                           WHERE c.user_id = %s
+                           GROUP BY c.category_id ORDER BY c.category_type, c.category_name""", (uid(),))
     return render_template("categories.html", rows=rows)
 
 
 @app.route("/categories/<int:cat_id>/delete", methods=["POST"])
 def delete_category(cat_id):
     try:
-        db.execute("DELETE FROM categories WHERE category_id = %s", (cat_id,))
+        db.execute("DELETE FROM categories WHERE category_id = %s AND user_id = %s", (cat_id, uid()))
         flash("Category deleted.", "success")
     except pymysql.err.IntegrityError:
         flash("Cannot delete a category that has transactions.", "error")
@@ -246,14 +300,15 @@ def budgets():
     if request.method == "POST":
         year = request.form.get("year", type=int) or year
         month = request.form.get("month", type=int) or month
-        expense_cats = db.query_all("SELECT category_id FROM categories WHERE category_type='expense'")
+        expense_cats = db.query_all("SELECT category_id FROM categories WHERE user_id = %s AND category_type='expense'",
+                                    (uid(),))
         errors = 0
         for c in expense_cats:
             raw = request.form.get(f"budget_{c['category_id']}", "").strip()
             if raw == "":
-                db.execute("""DELETE FROM monthly_budgets WHERE category_id=%s
+                db.execute("""DELETE FROM monthly_budgets WHERE user_id=%s AND category_id=%s
                               AND budget_month=%s AND budget_year=%s""",
-                           (c["category_id"], month, year))
+                           (uid(), c["category_id"], month, year))
                 continue
             try:
                 amt = Decimal(raw)
@@ -263,19 +318,20 @@ def budgets():
                 errors += 1
                 continue
             if amt == 0:
-                db.execute("""DELETE FROM monthly_budgets WHERE category_id=%s
+                db.execute("""DELETE FROM monthly_budgets WHERE user_id=%s AND category_id=%s
                               AND budget_month=%s AND budget_year=%s""",
-                           (c["category_id"], month, year))
+                           (uid(), c["category_id"], month, year))
             else:
-                db.execute("""INSERT INTO monthly_budgets (category_id, budget_month, budget_year, budget_amount)
-                              VALUES (%s, %s, %s, %s)
+                db.execute("""INSERT INTO monthly_budgets (user_id, category_id, budget_month, budget_year, budget_amount)
+                              VALUES (%s, %s, %s, %s, %s)
                               ON DUPLICATE KEY UPDATE budget_amount = VALUES(budget_amount)""",
-                           (c["category_id"], month, year, round(amt, 2)))
+                           (uid(), c["category_id"], month, year, round(amt, 2)))
         flash("Budgets saved." if not errors else f"Saved, but {errors} invalid value(s) were skipped.",
               "success" if not errors else "error")
         return redirect(url_for("budgets", year=year, month=month))
 
-    cats = db.query_all("SELECT * FROM categories WHERE category_type='expense' ORDER BY category_name")
+    cats = db.query_all("SELECT * FROM categories WHERE user_id = %s AND category_type='expense' ORDER BY category_name",
+                        (uid(),))
     current = {b["category_id"]: f"{b['budget_amount']:.2f}" for b in fetch_budgets(year, month)}
     df = analysis.transactions_df(fetch_transactions())
     status = analysis.budget_status(df, fetch_budgets(year, month), year, month)
@@ -377,12 +433,14 @@ def import_transactions():
                 text = None
                 flash("The file must be a UTF-8 text (CSV) file.", "error")
             if text is not None:
-                categories_ = db.query_all("SELECT * FROM categories")
+                categories_ = db.query_all("SELECT * FROM categories WHERE user_id = %s", (uid(),))
                 valid, rejected, fatal = csv_io.parse_import(text, categories_)
                 if fatal:
                     flash(fatal, "error")
                 else:
                     if valid:
+                        for row in valid:
+                            row["user_id"] = uid()
                         db.execute_many(INSERT_TRANSACTION, valid)
                     result = {"imported": len(valid), "rejected": rejected}
                     flash(f"Imported {len(valid)} row(s); rejected {len(rejected)}.",

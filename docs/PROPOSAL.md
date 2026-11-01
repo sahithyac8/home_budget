@@ -24,7 +24,7 @@ In scope: transaction management, expense categorisation, monthly budget trackin
 Out of scope (as stated in the brief): bank integration, payment gateways, real-time sync, forecasting models.
 
 ## User roles
-One role: the household member who enters and reviews the data. **No login or registration is included.**
+One role: the household member who enters and reviews the data. **Registration and login are included** so that each person only sees their own records.
 The brief and the deliverables list ask for user roles only "if applicable"; with one household and manually
 entered data there is nothing to separate. Multi-user accounts are recorded as future work.
 
@@ -32,7 +32,7 @@ entered data there is nothing to separate. Multi-user accounts are recorded as f
 Core (from the brief): transaction CRUD; categories; totals and savings; monthly budgets; category-wise and
 month-wise summaries; budget-violation detection; charts.
 Additional: (1) smart insights, (2) CSV export and import with a validation report, (3) budget suggestions.
-Supporting: health check, JSON API, friendly error pages, 91 automated tests.
+Supporting: health check, JSON API, friendly error pages, 123 automated tests.
 
 ## Technology
 Python 3, Flask, MySQL 8, PyMySQL, Pandas, NumPy, Matplotlib (core stack only; no extra libraries).
@@ -42,7 +42,7 @@ Credentials come from environment variables; `.env` files are excluded from vers
 - Amounts are in one currency (default rupee) and have at most two decimals.
 - A budget belongs to one expense category for one month and year; income categories have no budget.
 - Data is synthetic or entered by the user; no personal banking data is stored.
-- The household uses the application on one machine or a trusted network (no authentication).
+- Each user manages their own household data; accounts use an email and a password (no password reset or email verification).
 
 ## Project plan and deadlines
 | Week | Dates | Work | Evidence |
