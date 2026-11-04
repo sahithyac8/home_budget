@@ -6,10 +6,8 @@
 <section>
   <h2>Export</h2>
   <p class="muted">Download your records as CSV files that open in Excel.</p>
-  <p>
-    <a class="btn" href="{{ url_for('export_transactions') }}">All transactions (CSV)</a>
-    <a class="btn" href="{{ url_for('export_monthly_summary') }}">Monthly summary for this year (CSV)</a>
-  </p>
+  {% include "_export_form.html" %}
+  <p><a class="btn ghost" href="{{ url_for('export_monthly_summary') }}">Monthly summary for this year (CSV)</a></p>
 </section>
 
 <section>

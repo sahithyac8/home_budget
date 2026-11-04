@@ -55,3 +55,20 @@ CREATE TABLE IF NOT EXISTS monthly_budgets (
         REFERENCES categories(category_id) ON DELETE CASCADE,
     UNIQUE KEY uq_budget (user_id, category_id, budget_month, budget_year)
 ) ENGINE=InnoDB;
+
+-- Month-wise categories: which expense categories a user keeps for a given month.
+-- Suggestions are calculated from earlier months (see month_categories.py); a row here records the
+-- user's own choice: 'added' (pinned to the month) or 'dismissed' (a suggestion the user deleted).
+CREATE TABLE IF NOT EXISTS month_categories (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT NOT NULL,
+    category_id INT NOT NULL,
+    cat_year    SMALLINT NOT NULL,
+    cat_month   TINYINT NOT NULL,
+    status      ENUM('added','dismissed') NOT NULL,
+    CONSTRAINT fk_mc_user FOREIGN KEY (user_id)
+        REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_mc_category FOREIGN KEY (category_id)
+        REFERENCES categories(category_id) ON DELETE CASCADE,
+    UNIQUE KEY uq_month_category (user_id, category_id, cat_year, cat_month)
+) ENGINE=InnoDB;

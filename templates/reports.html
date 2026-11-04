@@ -17,7 +17,7 @@
 
 {% include "_insights.html" %}
 
-<section>
+<section id="summary">
   <h2>Month-wise summary</h2>
   <table>
     <thead><tr><th>Month</th><th class="num">Income</th><th class="num">Expenses</th><th class="num">Savings</th><th class="num">Savings rate</th></tr></thead>
@@ -36,7 +36,7 @@
   {{ chart('monthly', year, month, 'Income versus expenses by month') }}
 </section>
 
-<section>
+<section id="savings">
   <h2>Savings report</h2>
   {% if savings %}
   <table class="kv">
@@ -49,7 +49,7 @@
   {% else %}<p class="muted">No transactions recorded for {{ year }}.</p>{% endif %}
 </section>
 
-<section>
+<section id="categories">
   <h2>Category-wise expenses - {{ month_names[month - 1] ~ ' ' if month }}{{ year }}</h2>
   {% if cats %}
   <div class="grid2">
@@ -65,7 +65,7 @@
 </section>
 
 {% if month %}
-<section>
+<section id="violations">
   <h2>Budget violations - {{ month_names[month - 1] }} {{ year }}</h2>
   {% if violations %}
   <table>
@@ -84,7 +84,7 @@
 <p class="muted">Choose a specific month above to see budget violations for that month.</p>
 {% endif %}
 
-<section>
+<section id="pivot">
   <h2>Category by month ({{ year }})</h2>
   {% if pivot_rows %}
   <div class="scroll">

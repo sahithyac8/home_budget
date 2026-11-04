@@ -19,10 +19,18 @@
   </label>
   <label>Category
     <select name="category_id" id="cat" required>
-      {% for c in categories %}
+      <optgroup label="This month's categories">
+      {% for c in categories if c.category_type == 'income' or c.category_id in month_ids %}
         <option value="{{ c.category_id }}" data-type="{{ c.category_type }}"
                 {{ 'selected' if txn.category_id == c.category_id }}>{{ c.category_name }}</option>
       {% endfor %}
+      </optgroup>
+      <optgroup label="Other categories">
+      {% for c in categories if c.category_type == 'expense' and c.category_id not in month_ids %}
+        <option value="{{ c.category_id }}" data-type="{{ c.category_type }}"
+                {{ 'selected' if txn.category_id == c.category_id }}>{{ c.category_name }}</option>
+      {% endfor %}
+      </optgroup>
     </select>
   </label>
   <label>Amount

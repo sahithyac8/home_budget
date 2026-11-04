@@ -4,10 +4,11 @@
 <div class="head">
   <h1>Transactions</h1>
   <div>
-    <a class="btn" href="{{ url_for('export_transactions') }}">Export CSV</a>
     <a class="btn" href="{{ url_for('add_transaction') }}">+ Add transaction</a>
   </div>
 </div>
+
+<details class="export-box"><summary>Download CSV (1 month, 3 months or custom)</summary>{% include "_export_form.html" %}</details>
 
 <form method="get" class="inline filters">
   <label>Type

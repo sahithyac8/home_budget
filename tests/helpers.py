@@ -116,6 +116,7 @@ class FakeDB:
         self.categories = [dict(c) for c in CATEGORIES]
         self.transactions = [dict(t) for t in (TRANSACTIONS if transactions is None else transactions)]
         self.budgets = list(BUDGETS if budgets is None else budgets)
+        self.month_categories = []  # [{"category_id": .., "status": "added" | "dismissed"}]
         self.writes = []
         self.down = False          # True = behave like MySQL is not reachable
         self.execute_error = None  # an exception to raise on the next write
@@ -130,6 +131,8 @@ class FakeDB:
         self.queries.append((s, args))
         if args and args[0] != USER_ID:
             return []  # every record in this fake belongs to the demo user, so anyone else sees nothing
+        if "FROM month_categories" in s:
+            return list(self.month_categories)
         if "FROM monthly_budgets b" in s:
             _, year, month = args
             return [{"category_id": cid, "category_name": _NAME[cid], "budget_amount": Decimal(a)}

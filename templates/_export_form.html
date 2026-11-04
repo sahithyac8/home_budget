@@ -1,0 +1,23 @@
+{# Download transactions as CSV for the last 1 month, 3 months, a custom number of months, or everything. #}
+<form method="get" action="{{ url_for('export_transactions') }}" class="inline export-form" id="export-form">
+  <label>Download
+    <select name="range" id="export-range">
+      <option value="1">Last 1 month</option>
+      <option value="3">Last 3 months</option>
+      <option value="custom">Custom number of months</option>
+      <option value="all">All transactions</option>
+    </select>
+  </label>
+  <label id="export-months-wrap" hidden>Months
+    <input type="number" name="months" id="export-months" min="1" max="240" value="6">
+  </label>
+  <button type="submit">Download CSV</button>
+</form>
+<script>
+  (function () {
+    const sel = document.getElementById('export-range'), wrap = document.getElementById('export-months-wrap');
+    const num = document.getElementById('export-months');
+    function sync() { const c = sel.value === 'custom'; wrap.hidden = !c; num.disabled = !c; }
+    sel.addEventListener('change', sync); sync();
+  })();
+</script>

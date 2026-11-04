@@ -7,6 +7,33 @@
   {% with allow_year=false %}{% include "_period.html" %}{% endwith %}
 </div>
 
+<form method="get" class="inline">
+  <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+  <label>Monthly salary <input type="number" name="salary" min="1" step="0.01" value="{{ salary or '' }}" placeholder="e.g. 60000"></label>
+  <button type="submit">Suggest a budget</button>
+</form>
+
+{% if plan and plan.rows %}
+<section class="advice">
+  <h2>Advised budget for a salary of {{ salary|money }}</h2>
+  <p class="muted">Based on {{ plan.based_on }}. We keep {{ plan.savings|money }} (20%) aside as savings and share
+    {{ plan.spendable|money }} across your usual categories in proportion to what you normally spend.
+    The form below is pre-filled: change anything, then press <b>Save budgets</b>.</p>
+  <table>
+    <thead><tr><th>Category</th><th>Why it is included</th><th class="num">Share</th><th class="num">Advised budget</th></tr></thead>
+    <tbody>
+      {% for r in plan.rows %}
+      <tr><td>{{ r.category_name }}</td><td class="muted">{{ r.note }}</td><td class="num">{{ r.share }}%</td>
+          <td class="num"><b>{{ r.advised|money }}</b></td></tr>
+      {% endfor %}
+      <tr><td><b>Savings</b></td><td class="muted">Kept aside</td><td class="num">20%</td><td class="num"><b>{{ plan.savings|money }}</b></td></tr>
+    </tbody>
+  </table>
+</section>
+{% elif salary %}
+<p class="muted">No category history yet to base a budget on. Add some expenses first.</p>
+{% endif %}
+
 {% if suggestions %}
 <section>
   <h2>Suggested limits</h2>

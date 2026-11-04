@@ -7,30 +7,55 @@
   <title>{% block title %}Home Budget{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="{{ 'with-sidebar' if user }}">
   {% set ep = request.endpoint or '' %}
-  <header class="site-header">
-    <div class="wrap nav">
-      <a class="brand" href="{{ url_for('landing') }}">Home Budget</a>
-      {% if user %}
-      <nav aria-label="Main">
-        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if ep == 'dashboard' }}">Dashboard</a>
-        <a href="{{ url_for('transactions') }}" class="{{ 'active' if ep in ('transactions', 'add_transaction', 'edit_transaction') }}">Transactions</a>
-        <a href="{{ url_for('categories') }}" class="{{ 'active' if ep == 'categories' }}">Categories</a>
-        <a href="{{ url_for('budgets') }}" class="{{ 'active' if ep == 'budgets' }}">Budgets</a>
-        <a href="{{ url_for('reports') }}" class="{{ 'active' if ep == 'reports' }}">Reports</a>
-        <a href="{{ url_for('import_transactions') }}" class="{{ 'active' if ep == 'import_transactions' }}">Import / Export</a>
+  {% if user %}
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <a class="brand" href="{{ url_for('dashboard') }}">Home Budget</a>
+      <nav>
+        <p class="side-label">Overview</p>
+        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if ep == 'dashboard' }}"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V4h-6zM4 20h6v-4H4z"/></svg>Dashboard</a>
+        <p class="side-label">Money</p>
+        <a href="{{ url_for('transactions') }}" class="{{ 'active' if ep in ('transactions', 'edit_transaction') }}"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Transactions</a>
+        <a href="{{ url_for('add_transaction') }}" class="{{ 'active' if ep == 'add_transaction' }}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add transaction</a>
+        <p class="side-label">Plan</p>
+        <a href="{{ url_for('categories') }}" class="{{ 'active' if ep in ('categories', 'change_month_category') }}"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>Categories</a>
+        <a href="{{ url_for('budgets') }}" class="{{ 'active' if ep == 'budgets' }}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Budgets</a>
+        <p class="side-label">Insights</p>
+        <a href="{{ url_for('reports') }}" class="{{ 'active' if ep == 'reports' }}"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Analysis &amp; charts</a>
+        {% if ep == 'reports' %}
+        <div class="side-sub">
+          <a href="#summary">Month-wise summary</a><a href="#savings">Savings report</a>
+          <a href="#categories">Category expenses</a><a href="#violations">Budget violations</a><a href="#pivot">Category by month</a>
+        </div>
+        {% endif %}
+        <p class="side-label">Data</p>
+        <a href="{{ url_for('import_transactions') }}" class="{{ 'active' if ep == 'import_transactions' }}"><svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>Import / Export</a>
       </nav>
-      <div class="nav-user">
+      <div class="side-user">
         <span>{{ user.full_name }}</span>
         <form method="post" action="{{ url_for('auth.logout') }}"><button type="submit">Log out</button></form>
       </div>
-      {% else %}
+    </aside>
+    <div class="app-main">
+      <div class="mobile-bar">
+        <button type="button" class="menu-btn" aria-controls="sidebar" aria-expanded="false" onclick="var b=document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',b)">&#9776; Menu</button>
+        <span>{{ user.full_name }}</span>
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}<div class="wrap flashes">
+          {% for cat, msg in messages %}<div class="flash {{ cat }}" role="status">{{ msg }}</div>{% endfor %}
+        </div>{% endif %}
+      {% endwith %}
+  {% else %}
+  <header class="site-header">
+    <div class="wrap nav">
+      <a class="brand" href="{{ url_for('landing') }}">Home Budget</a>
       <div class="nav-actions">
         <a href="{{ url_for('auth.login') }}">Log in</a>
         <a class="btn sun" href="{{ url_for('auth.register') }}">Sign up</a>
       </div>
-      {% endif %}
     </div>
   </header>
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -38,9 +63,11 @@
       {% for cat, msg in messages %}<div class="flash {{ cat }}" role="status">{{ msg }}</div>{% endfor %}
     </div>{% endif %}
   {% endwith %}
+  {% endif %}
   <main class="{% block main_class %}wrap page{% endblock %}">
     {% block content %}{% endblock %}
   </main>
+  {% if user %}</div></div>{% endif %}
   {% block footer %}{% endblock %}
 </body>
 </html>

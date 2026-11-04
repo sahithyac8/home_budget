@@ -1,31 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Categories - Home Budget{% endblock %}
 {% block content %}
-<h1>Categories</h1>
+<div class="head">
+  <h1>Categories - {{ month_names[month - 1] }} {{ year }}</h1>
+  {% with allow_year=false %}{% include "_period.html" %}{% endwith %}
+</div>
+<p class="muted">Every month has its own list. It is suggested from your earlier months
+  {% if plan.observed %}(the last {{ plan.observed }} month{{ 's' if plan.observed != 1 }} with spending){% else %}(you have no earlier months yet, so these are starter suggestions){% endif %}:
+  <b>Core</b> categories are used almost every month (rent, groceries, bills), <b>Occasional</b> ones only now and then
+  (such as school fees). Delete any suggestion you do not need this month.</p>
 
 <form method="post" class="inline">
-  <label>Name <input type="text" name="category_name" maxlength="50" required></label>
+  <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+  <label>New category <input type="text" name="category_name" maxlength="50" required></label>
   <label>Type
-    <select name="category_type">
-      <option value="expense">Expense</option>
-      <option value="income">Income</option>
-    </select>
+    <select name="category_type"><option value="expense">Expense</option><option value="income">Income</option></select>
   </label>
-  <button type="submit">Add category</button>
+  <button type="submit">Add to {{ month_names[month - 1] }}</button>
 </form>
 
+<h2>{{ month_names[month - 1] }} {{ year }} expense categories</h2>
+{% if plan.active %}
 <table>
-  <thead><tr><th>Name</th><th>Type</th><th class="num">Transactions</th><th></th></tr></thead>
+  <thead><tr><th>Category</th><th>Priority</th><th>Why</th><th class="num">This month</th><th></th></tr></thead>
   <tbody>
-    {% for r in rows %}
+    {% for c in plan.active %}
     <tr>
-      <td>{{ r.category_name }}</td>
-      <td><span class="tag {{ r.category_type }}">{{ r.category_type }}</span></td>
-      <td class="num">{{ r.txn_count }}</td>
+      <td>{{ c.category_name }}{% if c.suggested %} <span class="tag">suggested</span>{% endif %}</td>
+      <td><span class="tag prio-{{ c.priority|lower }}">{{ c.priority }}</span></td>
+      <td class="muted">{{ c.reason }}</td>
+      <td class="num">{{ c.txn_count }} txn</td>
       <td class="actions">
-        {% if r.txn_count == 0 %}
-        <form method="post" action="{{ url_for('delete_category', cat_id=r.category_id) }}"
-              onsubmit="return confirm('Delete this category?');">
+        {% if c.can_remove %}
+        <form method="post" action="{{ url_for('change_month_category', cat_id=c.category_id) }}">
+          <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+          <input type="hidden" name="action" value="remove">
           <button class="link danger" type="submit">Delete</button>
         </form>
         {% else %}<span class="muted">in use</span>{% endif %}
@@ -34,4 +43,50 @@
     {% endfor %}
   </tbody>
 </table>
+{% else %}<p class="muted">No categories for this month. Add one above or from the list below.</p>{% endif %}
+
+{% if plan.removed or plan.other %}
+<h2>Other categories you can add to this month</h2>
+<table>
+  <tbody>
+    {% for c in plan.removed + plan.other %}
+    <tr>
+      <td>{{ c.category_name }}{% if c in plan.removed %} <span class="tag">removed from this month</span>{% endif %}</td>
+      <td class="muted">{{ c.reason if c.freq_pct is not none else '' }}</td>
+      <td class="actions">
+        <form method="post" action="{{ url_for('change_month_category', cat_id=c.category_id) }}">
+          <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+          <input type="hidden" name="action" value="add">
+          <button class="link" type="submit">{{ 'Restore' if c in plan.removed else 'Add' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<details class="export-box">
+  <summary>All categories (permanent list, including income)</summary>
+  <table>
+    <thead><tr><th>Name</th><th>Type</th><th class="num">Transactions</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.category_name }}</td>
+        <td><span class="tag {{ r.category_type }}">{{ r.category_type }}</span></td>
+        <td class="num">{{ r.txn_count }}</td>
+        <td class="actions">
+          {% if r.txn_count == 0 %}
+          <form method="post" action="{{ url_for('delete_category', cat_id=r.category_id) }}"
+                onsubmit="return confirm('Delete this category for good, from every month?');">
+            <button class="link danger" type="submit">Delete forever</button>
+          </form>
+          {% else %}<span class="muted">in use</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</details>
 {% endblock %}

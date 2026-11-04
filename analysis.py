@@ -216,3 +216,60 @@ def budget_suggestions(df, year, month, window=3, round_to=100):
     out["suggested"] = np.ceil(average / round_to) * round_to
     out["months_used"] = int(monthly.shape[1])
     return out.sort_values("suggested", ascending=False).reset_index(drop=True)[cols]
+
+
+# ---------- feature: advised budget from a salary ----------
+DEFAULT_SPLIT = {"rent": 30, "groceries": 15, "utilities": 8, "transportation": 8, "healthcare": 5,
+                 "education": 6, "entertainment": 6, "other expense": 4}
+
+
+def salary_budget_plan(df, salary, expense_categories, year, month, window=6, savings_pct=20,
+                       round_to=50, max_categories=8):
+    """Advise a budget for each category when a salary is added.
+
+    Categories: the most frequently used expense categories in the earlier months (used in at least
+    half of them, at most `max_categories`). Amounts: `savings_pct`% of the salary is kept aside, the
+    rest is shared in proportion to what the user normally spends in each category. With no history
+    yet, a typical split (rent 30, groceries 15, ...) is used instead.
+    Returns {"rows": [...], "spendable": x, "savings": y, "based_on": text}.
+    """
+    salary = float(salary or 0)
+    empty = {"rows": [], "spendable": 0.0, "savings": 0.0, "based_on": ""}
+    if salary <= 0 or not expense_categories:
+        return empty
+    savings = round(salary * savings_pct / 100, 2)
+    spendable = round(salary - savings, 2)
+
+    exp = df[df["transaction_type"] == "expense"].copy()
+    exp["p"] = exp["year"] * 12 + exp["month"] - 1
+    target = year * 12 + month - 1
+    hist = exp[(exp["p"] >= target - window) & (exp["p"] < target)]
+    observed = int(hist["p"].nunique())
+    weights = []  # (category, weight, note)
+    if observed:
+        monthly = hist.groupby(["category_id", "p"])["amount"].sum().reset_index()
+        stats = monthly.groupby("category_id").agg(months=("p", "nunique"), avg=("amount", "mean"))
+        names = {c["category_id"]: c["category_name"] for c in expense_categories}
+        ranked = sorted(((cid, r["months"], r["avg"]) for cid, r in stats.iterrows() if cid in names),
+                        key=lambda t: (-t[1], -t[2]))
+        chosen = [t for t in ranked if t[1] / observed >= 0.5] or ranked[:5]
+        for cid, months, avg in chosen[:max_categories]:
+            weights.append(({"category_id": cid, "category_name": names[cid]}, float(avg),
+                            f"Used in {months} of the last {observed} month{'s' if observed != 1 else ''}"))
+        based_on = f"your most frequently used categories over the last {observed} month{'s' if observed != 1 else ''}"
+    else:
+        for c in expense_categories:
+            w = DEFAULT_SPLIT.get(c["category_name"].strip().lower())
+            if w:
+                weights.append((c, float(w), "Typical split (no spending history yet)"))
+        based_on = "a typical household split, because there is no spending history yet"
+    total = sum(w for _, w, _ in weights)
+    if total <= 0:
+        return empty
+    rows = []
+    for c, w, note in weights:
+        advised = max(round_to, round(spendable * w / total / round_to) * round_to)
+        rows.append({"category_id": c["category_id"], "category_name": c["category_name"],
+                     "share": round(w / total * 100, 1), "advised": float(advised), "note": note})
+    rows.sort(key=lambda r: -r["advised"])
+    return {"rows": rows, "spendable": spendable, "savings": savings, "based_on": based_on}

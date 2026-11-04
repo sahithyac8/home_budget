@@ -10,6 +10,7 @@ import analysis
 import charts
 import csv_io
 import db
+import month_categories
 from auth import auth
 from config import SECRET_KEY_IS_RANDOM, Config
 from validation import validate_transaction
@@ -28,6 +29,24 @@ INSERT_TRANSACTION = """INSERT INTO transactions
 
 # Pages a visitor can open without logging in. Everything else needs an account.
 PUBLIC_ENDPOINTS = {"landing", "auth.login", "auth.register"}
+
+
+MONTH_CATEGORY_DDL = """CREATE TABLE IF NOT EXISTS month_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, category_id INT NOT NULL,
+    cat_year SMALLINT NOT NULL, cat_month TINYINT NOT NULL, status ENUM('added','dismissed') NOT NULL,
+    CONSTRAINT fk_mc_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_mc_category FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE,
+    UNIQUE KEY uq_month_category (user_id, category_id, cat_year, cat_month)) ENGINE=InnoDB"""
+_month_table_ready = False
+
+
+def ensure_month_table():
+    """Create the month_categories table on first use, so an already-deployed database upgrades itself."""
+    global _month_table_ready
+    if _month_table_ready or app.config.get("TESTING"):
+        return
+    db.execute(MONTH_CATEGORY_DDL)
+    _month_table_ready = True
 
 
 # ---------- helpers ----------
@@ -56,6 +75,8 @@ def load_user_and_require_login():
         g.user = db.query_one("SELECT user_id, full_name FROM users WHERE user_id = %s", (session["user_id"],))
         if g.user is None:
             session.clear()  # the account no longer exists
+        else:
+            ensure_month_table()
     if request.endpoint is not None and g.user is None and request.endpoint not in PUBLIC_ENDPOINTS:
         if request.path.startswith("/api/"):
             return jsonify(error="Please log in first."), 401
@@ -214,7 +235,16 @@ def transactions():
 
 def _form_page(txn, errors=None):
     categories = db.query_all("SELECT * FROM categories WHERE user_id = %s ORDER BY category_name", (uid(),))
-    return render_template("transaction_form.html", txn=txn, categories=categories,
+    when = txn.get("transaction_date")
+    if isinstance(when, str):
+        try:
+            when = datetime.strptime(when, "%Y-%m-%d").date()
+        except ValueError:
+            when = None
+    when = when or date.today()
+    plan = plan_for_month(when.year, when.month)  # that month's own categories are listed first
+    month_ids = {i["category_id"] for i in plan["active"]}
+    return render_template("transaction_form.html", txn=txn, categories=categories, month_ids=month_ids,
                            errors=errors or [])
 
 
@@ -227,6 +257,11 @@ def add_transaction():
         data["user_id"] = uid()
         db.execute(INSERT_TRANSACTION, data)
         flash("Transaction added.", "success")
+        category = db.query_one("SELECT * FROM categories WHERE category_id = %s AND user_id = %s",
+                                (data["category_id"], uid()))
+        if data["transaction_type"] == "income" and category and category["category_name"].strip().lower() == "salary":
+            when = data["transaction_date"]  # a salary: go straight to the advised budget for that month
+            return redirect(url_for("budgets", year=when.year, month=when.month, salary=f"{data['amount']:.2f}"))
         return redirect(url_for("transactions"))
     return _form_page({"transaction_date": date.today(), "transaction_type": "expense"})
 
@@ -259,10 +294,41 @@ def delete_transaction(txn_id):
     return redirect(request.referrer or url_for("transactions"))
 
 
-# ---------- categories ----------
+# ---------- categories (month-wise) ----------
+def month_args():
+    """?year=&month= for the category pages; a category list is always for one real month."""
+    year, month = period_args(default_month=date.today().month)
+    return year, (month or date.today().month)
+
+
+def expense_categories():
+    return db.query_all("SELECT * FROM categories WHERE user_id = %s AND category_type='expense' ORDER BY category_name",
+                        (uid(),))
+
+
+def month_overrides(year, month):
+    rows = db.query_all("SELECT category_id, status FROM month_categories WHERE user_id = %s "
+                        "AND cat_year = %s AND cat_month = %s", (uid(), year, month))
+    return {r["category_id"]: r["status"] for r in rows}
+
+
+def plan_for_month(year, month, df=None):
+    if df is None:
+        df = analysis.transactions_df(fetch_transactions())
+    return month_categories.category_plan(df, expense_categories(), month_overrides(year, month), year, month)
+
+
+def set_month_status(cat_id, year, month, status):
+    db.execute("""INSERT INTO month_categories (user_id, category_id, cat_year, cat_month, status)
+                  VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE status = VALUES(status)""",
+               (uid(), cat_id, year, month, status))
+
+
 @app.route("/categories", methods=["GET", "POST"])
 def categories():
     if request.method == "POST":
+        year = request.form.get("year", type=int) or date.today().year
+        month = request.form.get("month", type=int) or date.today().month
         name = request.form.get("category_name", "").strip()
         ctype = request.form.get("category_type")
         if not name or len(name) > 50 or ctype not in ("income", "expense"):
@@ -271,15 +337,46 @@ def categories():
             try:
                 db.execute("INSERT INTO categories (user_id, category_name, category_type) VALUES (%s, %s, %s)",
                            (uid(), name, ctype))
+                if ctype == "expense":  # a new expense category is added to the month being viewed
+                    db.execute("""INSERT INTO month_categories (user_id, category_id, cat_year, cat_month, status)
+                                  SELECT user_id, category_id, %s, %s, 'added' FROM categories
+                                  WHERE user_id = %s AND category_name = %s AND category_type = 'expense'
+                                  ON DUPLICATE KEY UPDATE status = 'added'""", (year, month, uid(), name))
                 flash("Category added.", "success")
             except pymysql.err.IntegrityError:
                 flash("That category already exists.", "error")
-        return redirect(url_for("categories"))
+        return redirect(url_for("categories", year=year, month=month))
+    year, month = month_args()
+    plan = plan_for_month(year, month)
     rows = db.query_all("""SELECT c.*, COUNT(t.transaction_id) AS txn_count
                            FROM categories c LEFT JOIN transactions t ON t.category_id = c.category_id
                            WHERE c.user_id = %s
                            GROUP BY c.category_id ORDER BY c.category_type, c.category_name""", (uid(),))
-    return render_template("categories.html", rows=rows)
+    return render_template("categories.html", rows=rows, plan=plan, year=year, month=month)
+
+
+@app.route("/categories/<int:cat_id>/month", methods=["POST"])
+def change_month_category(cat_id):
+    """Delete a suggested category from one month ('remove') or put one back / add one ('add')."""
+    year = request.form.get("year", type=int) or date.today().year
+    month = request.form.get("month", type=int) or date.today().month
+    action = request.form.get("action")
+    category = db.query_one("SELECT * FROM categories WHERE category_id = %s AND user_id = %s", (cat_id, uid()))
+    if not category or action not in ("add", "remove") or not 1 <= month <= 12:
+        abort(404)
+    if action == "remove":
+        df = analysis.transactions_df(fetch_transactions())
+        used = ((df["category_id"] == cat_id) & (df["year"] == year) & (df["month"] == month)).any()
+        if used:
+            flash(f"{category['category_name']} has transactions in {analysis.MONTH_NAMES[month - 1]} {year}, "
+                  "so it stays in that month.", "error")
+        else:
+            set_month_status(cat_id, year, month, "dismissed")
+            flash(f"{category['category_name']} removed from {analysis.MONTH_NAMES[month - 1]} {year}.", "success")
+    else:
+        set_month_status(cat_id, year, month, "added")
+        flash(f"{category['category_name']} added to {analysis.MONTH_NAMES[month - 1]} {year}.", "success")
+    return redirect(url_for("categories", year=year, month=month))
 
 
 @app.route("/categories/<int:cat_id>/delete", methods=["POST"])
@@ -337,13 +434,19 @@ def budgets():
     status = analysis.budget_status(df, fetch_budgets(year, month), year, month)
 
     suggestions = analysis.budget_suggestions(df, year, month)
+    salary = request.args.get("salary", type=float)
+    if salary is not None and not (0 < salary < 10_000_000_000):
+        salary = None
+    plan = analysis.salary_budget_plan(df, salary, cats, year, month) if salary else None
     prefilled = bool(request.args.get("suggest")) and not suggestions.empty
     form_values = dict(current)
-    if prefilled:  # shown in the form only; nothing is saved until the user presses Save
+    if plan and plan["rows"]:
+        form_values.update({r["category_id"]: f"{r['advised']:.2f}" for r in plan["rows"]})
+    elif prefilled:  # shown in the form only; nothing is saved until the user presses Save
         form_values.update({int(r["category_id"]): f"{r['suggested']:.2f}"
                             for r in suggestions.to_dict("records")})
     return render_template("budgets.html", year=year, month=month, cats=cats, current=current,
-                           form_values=form_values, prefilled=prefilled,
+                           form_values=form_values, prefilled=prefilled, plan=plan, salary=salary,
                            status=status.to_dict("records"),
                            suggestions=suggestions.to_dict("records"))
 
@@ -399,16 +502,35 @@ def csv_response(text, filename):
                     headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+def months_start(n, today=None):
+    """First day of the month that is n-1 months before this one (so n=1 means this month only)."""
+    today = today or date.today()
+    index = today.year * 12 + today.month - 1 - (n - 1)
+    return date(index // 12, index % 12 + 1, 1)
+
+
 @app.route("/export/transactions.csv")
 def export_transactions():
-    year = request.args.get("year", type=int)
-    month = request.args.get("month", type=int)
+    """Download filtered by ?range=1 | 3 | custom&months=N | all, or by ?year=&month= (older links)."""
     rows = fetch_transactions()
-    if year:
-        rows = [r for r in rows if r["transaction_date"].year == year]
-    if month:
-        rows = [r for r in rows if r["transaction_date"].month == month]
-    return csv_response(csv_io.transactions_to_csv(rows), "transactions.csv")
+    name = "transactions.csv"
+    rng = request.args.get("range", "")
+    if rng in ("1", "3", "custom"):
+        n = 1 if rng == "1" else 3 if rng == "3" else request.args.get("months", type=int)
+        if not n or not 1 <= n <= 240:
+            flash("Enter a number of months between 1 and 240.", "error")
+            return redirect(url_for("import_transactions"))
+        start = months_start(n)
+        rows = [r for r in rows if r["transaction_date"] >= start]
+        name = f"transactions-last-{n}-month{'s' if n != 1 else ''}.csv"
+    else:
+        year = request.args.get("year", type=int)
+        month = request.args.get("month", type=int)
+        if year:
+            rows = [r for r in rows if r["transaction_date"].year == year]
+        if month:
+            rows = [r for r in rows if r["transaction_date"].month == month]
+    return csv_response(csv_io.transactions_to_csv(rows), name)
 
 
 @app.route("/export/monthly-summary.csv")

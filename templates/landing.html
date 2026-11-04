@@ -43,7 +43,7 @@
       <div class="feature">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h6"/></svg>
         <div><h3>Your own categories</h3>
-          <p>Start with twelve ready-made categories such as Rent, Groceries and Salary, then add your own.</p></div>
+          <p>Categories are suggested month by month from your earlier months, and you can delete the ones you do not need.</p></div>
       </div>
       <div class="feature">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
@@ -58,12 +58,57 @@
       <div class="feature">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/></svg>
         <div><h3>Import and export CSV</h3>
-          <p>Bring in a spreadsheet of past records, or download yours to open in Excel.</p></div>
+          <p>Bring in a spreadsheet of past records, or download the last 1, 3 or any number of months.</p></div>
       </div>
       <div class="feature">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3z"/></svg>
         <div><h3>Private by default</h3>
           <p>Passwords are stored as salted hashes, and you only ever see your own records.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <h2>See what it looks like inside</h2>
+    <p class="intro">Once you log in, a side panel on every page takes you to the dashboard, transactions, categories, budgets, analysis &amp; charts and import / export.</p>
+    <div class="showcase">
+      <div class="show-row">
+        <div class="show-text"><h3>A dashboard that tells you where you stand</h3><p>Open the app and the month is already summed up for you.</p><ul><li>Income, expenses, savings and savings rate at a glance</li><li>Warnings the moment a category passes its limit</li><li>Plain-language insights and charts</li></ul></div>
+        <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i></div>
+          <img src="{{ url_for('static', filename='img/dashboard.jpg') }}" alt="The dashboard with income, expenses, savings and charts" loading="lazy" width="1280" height="800"></figure>
+      </div>
+      <div class="show-row">
+        <div class="show-text"><h3>Categories that change month by month</h3><p>Each month gets its own category list, suggested from your earlier months.</p><ul><li><b>Core</b> categories (rent, groceries, bills) are repeated every month</li><li><b>Occasional</b> ones (like school fees) are suggested only when they tend to come up</li><li>Delete any suggestion you do not need</li></ul></div>
+        <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i></div>
+          <img src="{{ url_for('static', filename='img/categories.jpg') }}" alt="Month-wise categories page with Core and Occasional priorities" loading="lazy" width="1280" height="800"></figure>
+      </div>
+      <div class="show-row">
+        <div class="show-text"><h3>Add your salary, get an advised budget</h3><p>When you record a salary, the app proposes a limit for each of your most frequently used categories.</p><ul><li>20% is kept aside as savings</li><li>Pre-filled form: change anything, then save</li><li>Based on your own spending history</li></ul></div>
+        <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i></div>
+          <img src="{{ url_for('static', filename='img/budgets.jpg') }}" alt="Budget page with an advised budget for a salary" loading="lazy" width="1280" height="800"></figure>
+      </div>
+      <div class="show-row">
+        <div class="show-text"><h3>Every transaction, filterable and downloadable</h3><p>Add, edit and delete records, then filter them by type, category or month.</p><ul><li>Download the last 1 month, 3 months or any number of months as CSV</li><li>Import a spreadsheet of past records</li></ul></div>
+        <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i></div>
+          <img src="{{ url_for('static', filename='img/transactions.jpg') }}" alt="Transactions list with filters and CSV download" loading="lazy" width="1280" height="800"></figure>
+      </div>
+      <div class="show-row">
+        <div class="show-text"><h3>Analysis and charts, one click away</h3><p>Compare months and categories with charts that explain themselves.</p><ul><li>Month-wise summary and savings report</li><li>Expense distribution and budget utilization charts</li><li>Jump to any section from the side panel</li></ul></div>
+        <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i></div>
+          <img src="{{ url_for('static', filename='img/reports.jpg') }}" alt="Analysis and charts page" loading="lazy" width="1280" height="800"></figure>
+      </div>
+      <div class="show-row">
+        <div class="show-text"><h3>Your data, your way</h3><p>Import and export sit in the same side panel as everything else.</p><ul><li>Last 1 month, 3 months, custom months or everything</li></ul></div>
+        <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i></div>
+          <img src="{{ url_for('static', filename='img/export.jpg') }}" alt="Import and export page" loading="lazy" width="1280" height="800"></figure>
+      </div>
+      <div class="show-row">
+        <div class="show-text"><h3>Log in or sign up in a minute</h3><p>An email and a password are all you need. Your twelve starter categories are ready right away.</p>
+          <p><a class="btn sun" href="{{ url_for('auth.register') }}">Sign up</a> <a class="btn ghost" href="{{ url_for('auth.login') }}">Log in</a></p></div>
+        <figure class="shot"><div class="shot-bar"><i></i><i></i><i></i></div>
+          <img src="{{ url_for('static', filename='img/register.jpg') }}" alt="The sign up page" loading="lazy" width="1280" height="800"></figure>
       </div>
     </div>
   </div>

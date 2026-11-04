@@ -116,7 +116,8 @@ class TransactionCrudTests(AppTestCase):
 class CategoryAndBudgetTests(AppTestCase):
     def test_add_category(self):
         self.client.post("/categories", data={"category_name": "Pets", "category_type": "expense"})
-        self.assertTrue(self.fake.writes[-1][0].startswith("INSERT INTO categories"))
+        self.assertTrue(self.fake.writes[0][0].startswith("INSERT INTO categories"))
+        self.assertTrue(self.fake.writes[-1][0].startswith("INSERT INTO month_categories"))
 
     def test_add_category_validation(self):
         for form in [{"category_name": "", "category_type": "expense"},
